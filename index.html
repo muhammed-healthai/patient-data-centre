@@ -3,36 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ward Round Documentation</title>
+<title>Patient Data Centre</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 body{font-family:'DM Sans',sans-serif;background:#f0f2f5}.screen{display:none}.screen.active{display:block}.drawing-canvas{position:absolute;top:0;left:0;cursor:crosshair}.diagram-container{position:relative;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden}.entry-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}.btn-primary{background:#1e40af;color:#fff;transition:all .2s}.btn-primary:hover{background:#1e3a8a}.btn-secondary{background:#e2e8f0;color:#334155;transition:all .2s}.btn-secondary:hover{background:#cbd5e1}.btn-danger{background:#fee2e2;color:#991b1b;transition:all .2s}.btn-danger:hover{background:#fecaca}.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:500}.fade-in{animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}textarea{resize:vertical}.toolbar-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid #e2e8f0;cursor:pointer;transition:all .15s}.toolbar-btn:hover{background:#e2e8f0}.toolbar-btn.active{background:#1e40af;color:#fff;border-color:#1e40af}.ai-badge{background:linear-gradient(135deg,#ede9fe,#dbeafe);color:#4338ca;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px}
+.nav-link{font-size:14px;font-weight:500;color:#64748b;cursor:pointer;padding:6px 12px;border-radius:8px}.nav-link:hover{background:#f1f5f9;color:#1e293b}.nav-link.active{background:#eff6ff;color:#1e40af}
+.type-tile{border:1px solid #e2e8f0;border-radius:14px;padding:18px;cursor:pointer;transition:all .15s;text-align:left}.type-tile:hover{border-color:#1e40af;background:#f8faff;transform:translateY(-2px)}
+.news-row{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9}
+.score-pill{min-width:30px;text-align:center;font-weight:700;font-size:13px;border-radius:8px;padding:3px 0}
+.seg-btn{flex:1;padding:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#475569}.seg-btn.active{background:#1e40af;color:#fff;border-color:#1e40af}.seg-btn:first-child{border-radius:8px 0 0 8px}.seg-btn:last-child{border-radius:0 8px 8px 0}
+.rec-tab{padding:8px 16px;font-size:14px;font-weight:500;color:#64748b;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px}.rec-tab:hover{color:#1e293b}.rec-tab.active{color:#1e40af;border-bottom-color:#1e40af}
+.fhir-pre{background:#0f172a;color:#cbd5e1;font-family:ui-monospace,monospace;font-size:11px;line-height:1.5;padding:12px;border-radius:8px;margin-top:10px;overflow-x:auto;white-space:pre}
+.lab-flag-h{color:#b91c1c;font-weight:700}.lab-flag-l{color:#b45309;font-weight:700}
 </style>
 </head>
 <body class="min-h-screen">
-<header class="bg-white border-b border-gray-200 sticky top-0 z-50"><div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between"><div class="flex items-center gap-3 cursor-pointer" onclick="showScreen('patientList')"><div class="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center"><svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6M12 9v6M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span class="text-lg font-semibold text-gray-800">Ward Round</span></div></div></header>
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50"><div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+<div class="flex items-center gap-3 cursor-pointer" onclick="showScreen('patientList')"><div class="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center"><svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6M12 9v6M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><span class="text-lg font-semibold text-gray-800">Patient Data Centre</span></div>
+<div class="flex items-center gap-2">
+<span class="nav-link" id="nav-patients" onclick="showScreen('patientList')">Patients</span>
+<span class="nav-link" id="nav-admin" onclick="showScreen('admin')">Admin</span>
+<button onclick="resetDemo()" class="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium ml-1">Reset demo</button>
+</div></div></header>
 <main class="max-w-5xl mx-auto px-4 py-6">
 
+<!-- ===== PATIENT LIST ===== -->
 <div id="screen-patientList" class="screen active fade-in">
-<div class="flex items-center justify-between mb-6"><div><h1 class="text-2xl font-bold text-gray-900">My patients</h1><p class="text-gray-500 text-sm mt-1">Select a patient to view entries or start a new ward round</p></div><div class="flex gap-2"><button onclick="openAddPatientModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add patient</button></div></div>
+<div class="flex items-center justify-between mb-6"><div><h1 class="text-2xl font-bold text-gray-900">My patients</h1><p class="text-gray-500 text-sm mt-1">Select a patient to view their record or add a new entry</p></div><div class="flex gap-2"><button onclick="importFromED()" class="btn-secondary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M7 16l-4-4 4-4M3 12h13M21 4v16"/></svg>Import from ED Tracker</button><button onclick="openAddPatientModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add patient</button></div></div>
+<div class="flex mb-5" style="max-width:280px">
+<button class="seg-btn active" id="filt-active" onclick="setPatientFilter('active')">Active</button>
+<button class="seg-btn" id="filt-discharged" onclick="setPatientFilter('discharged')">Discharged</button>
+</div>
 <div id="patientGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-<div id="emptyState" class="hidden text-center py-20"><p class="text-gray-500 font-medium">No patients yet</p><p class="text-gray-400 text-sm mt-1">Add your first patient to get started</p></div>
+<div id="emptyState" class="hidden text-center py-20"><p class="text-gray-500 font-medium">No patients here</p><p class="text-gray-400 text-sm mt-1">Add a patient to get started</p></div>
 </div>
 
+<!-- ===== PATIENT RECORD ===== -->
 <div id="screen-patientRecord" class="screen fade-in">
 <button onclick="showScreen('patientList')" class="text-sm text-blue-700 hover:text-blue-900 mb-4 flex items-center gap-1"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>Back to patients</button>
-<div id="patientHeader" class="bg-white rounded-2xl p-6 border border-gray-200 mb-6"></div>
-<div class="flex items-center justify-between mb-4"><h2 class="text-lg font-semibold text-gray-800">Ward round entries</h2><button onclick="startNewEntry()" class="btn-primary px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New entry</button></div>
+<div id="patientHeader" class="bg-white rounded-2xl p-6 border border-gray-200 mb-4"></div>
+<div id="recordNewsBanner" class="mb-4"></div>
+<div class="flex gap-1 mb-5 border-b border-gray-200 overflow-x-auto">
+<button class="rec-tab active" data-tab="timeline" onclick="switchTab('timeline')">Timeline</button>
+<button class="rec-tab" data-tab="results" onclick="switchTab('results')">Results</button>
+<button class="rec-tab" data-tab="imaging" onclick="switchTab('imaging')">Imaging</button>
+<button class="rec-tab" data-tab="journey" onclick="switchTab('journey')">Journey</button>
+</div>
+<div id="tab-timeline">
+<div class="flex items-center justify-between mb-4"><h2 class="text-lg font-semibold text-gray-800">Timeline</h2><button onclick="openEntryTypeModal()" class="btn-primary px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New entry</button></div>
 <div id="entryTimeline"></div>
-<div id="noEntries" class="hidden text-center py-12 bg-white rounded-2xl border border-gray-200"><p class="text-gray-500">No entries yet — start your first ward round</p></div>
+<div id="noEntries" class="hidden text-center py-12 bg-white rounded-2xl border border-gray-200"><p class="text-gray-500">No entries yet — add the first one</p></div>
+</div>
+<div id="tab-results" class="hidden"></div>
+<div id="tab-imaging" class="hidden"></div>
+<div id="tab-journey" class="hidden"></div>
 </div>
 
-<div id="screen-entryForm" class="screen fade-in">
+<!-- ===== WARD ROUND FORM ===== -->
+<div id="screen-wardRound" class="screen fade-in">
 <button onclick="showScreen('patientRecord')" class="text-sm text-blue-700 hover:text-blue-900 mb-4 flex items-center gap-1"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>Back to patient</button>
-<div id="entryFormContent" class="space-y-6">
+<div id="wardRoundContent" class="space-y-6">
 
-<section class="bg-white rounded-2xl p-6 border border-gray-200"><h3 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2"><span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-md flex items-center justify-center text-xs font-bold">1</span>Patient details</h3><div id="entryPatientDetails" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm"></div></section>
+<section class="bg-white rounded-2xl p-6 border border-gray-200"><h3 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2"><span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-md flex items-center justify-center text-xs font-bold">1</span>Patient details</h3><div id="wrPatientDetails" class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm"></div></section>
+
+<div id="wrLatestNews"></div>
 
 <section class="bg-white rounded-2xl p-6 border border-gray-200"><h3 class="text-base font-semibold text-gray-800 mb-1 flex items-center gap-2"><span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-md flex items-center justify-center text-xs font-bold">2</span>PMH &amp; presenting complaint <span class="ai-badge ml-1" id="aiBadge">AI summary</span></h3><p class="text-xs text-gray-400 mb-3" id="aiSummaryNote">Auto-generated from previous entries</p><textarea id="fieldPMH" rows="5" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400" placeholder="Past medical history and presenting complaint..."></textarea></section>
 
@@ -58,12 +93,6 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5}.screen{display:none}.s
 <svg viewBox="0 0 200 200" class="w-full h-full" style="pointer-events:none">
   <polygon points="100,40 152,70 152,130 100,160 48,130 48,70" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linejoin="round"/>
   <circle cx="100" cy="100" r="5" fill="none" stroke="#94a3b8" stroke-width="2.5"/>
-  <line x1="100" y1="40" x2="100" y2="15" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="152" y1="70" x2="175" y2="57" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="152" y1="130" x2="175" y2="143" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="100" y1="160" x2="100" y2="185" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="48" y1="130" x2="25" y2="143" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="48" y1="70" x2="25" y2="57" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
 </svg>
 <canvas class="drawing-canvas" data-diagram="abdomen"></canvas>
 </div>
@@ -83,129 +112,458 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5}.screen{display:none}.s
 <div class="flex gap-1 mt-2" data-toolbar="limbs"></div>
 </div>
 
-</div></section>
+</div>
+<div class="mt-4"><label class="block text-xs font-medium text-gray-500 mb-1">Other examination findings</label><textarea id="fieldOtherExam" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400" placeholder="Neuro, MSK, skin, lines/drains, ENT, eyes, or any other examination notes..."></textarea></div>
+</section>
 
 <section class="bg-white rounded-2xl p-6 border border-gray-200"><h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2"><span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-md flex items-center justify-center text-xs font-bold">5</span>Systems review</h3><textarea id="fieldSystems" rows="4" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400" placeholder="CVS, Resp, GI, Neuro, MSK, Endo, Renal, Haem..."></textarea></section>
 
 <section class="bg-white rounded-2xl p-6 border border-gray-200"><h3 class="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2"><span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-md flex items-center justify-center text-xs font-bold">6</span>Plan / management</h3><textarea id="fieldPlan" rows="5" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400" placeholder="Investigations, medications, referrals, escalation, discharge plans..."></textarea></section>
 
-<section class="bg-white rounded-2xl p-6 border border-gray-200"><h3 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2"><span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-md flex items-center justify-center text-xs font-bold">7</span>Sign-off</h3><div class="grid grid-cols-1 sm:grid-cols-3 gap-4"><div><label class="block text-xs font-medium text-gray-500 mb-1">Clinician name</label><input id="fieldSignName" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Dr..."></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Grade</label><select id="fieldSignGrade" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"><option value="">Select</option><option>FY1</option><option>FY2</option><option>CT1</option><option>CT2</option><option>CT3</option><option>ST1</option><option>ST2</option><option>ST3</option><option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option><option>ST8</option><option>SHO</option><option>Registrar</option><option>Consultant</option><option>GP</option><option>ANP</option><option>PA</option></select></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Date</label><input id="fieldSignDate" type="date" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div></div></section>
+<section class="bg-white rounded-2xl p-6 border border-gray-200"><h3 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2"><span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-md flex items-center justify-center text-xs font-bold">7</span>Sign-off</h3><div class="grid grid-cols-2 sm:grid-cols-4 gap-4"><div><label class="block text-xs font-medium text-gray-500 mb-1">Clinician name</label><input id="fieldSignName" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Dr..."></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Grade / role</label><select id="fieldSignGrade" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"></select></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Date</label><input id="fieldSignDate" type="date" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Time</label><input id="fieldSignTime" type="time" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div></div></section>
 
-<div id="entryActions" class="flex gap-3 justify-end pb-8"><button onclick="showScreen('patientRecord')" class="btn-secondary px-6 py-2.5 rounded-xl text-sm font-medium">Cancel</button><button onclick="saveEntry()" class="btn-primary px-6 py-2.5 rounded-xl text-sm font-medium">Save entry</button></div>
+<div id="wrActions" class="flex gap-3 justify-end pb-8"><button onclick="showScreen('patientRecord')" class="btn-secondary px-6 py-2.5 rounded-xl text-sm font-medium">Cancel</button><button onclick="saveWardRound()" class="btn-primary px-6 py-2.5 rounded-xl text-sm font-medium">Save entry</button></div>
 </div></div>
+
+<!-- ===== NEWS FORM ===== -->
+<div id="screen-newsForm" class="screen fade-in">
+<button onclick="showScreen('patientRecord')" class="text-sm text-blue-700 hover:text-blue-900 mb-4 flex items-center gap-1"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>Back to patient</button>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-200">
+<h3 class="text-base font-semibold text-gray-800 mb-1">NEWS2 observations</h3>
+<p id="newsPatientName" class="text-xs text-gray-400 mb-4"></p>
+
+<div class="news-row"><div><p class="text-sm font-medium text-gray-700">Respiration rate</p><p class="text-xs text-gray-400">breaths / min</p></div><input id="news_rr" type="number" oninput="recalcNews()" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-200"><span id="sc_rr" class="score-pill bg-gray-100 text-gray-400">–</span></div>
+
+<div class="py-3 border-b border-gray-100">
+<div class="flex items-center justify-between mb-2"><p class="text-sm font-medium text-gray-700">SpO₂ scale</p>
+<div class="flex" style="width:180px"><button class="seg-btn active" id="scale1btn" onclick="setScale(1)">Scale 1</button><button class="seg-btn" id="scale2btn" onclick="setScale(2)">Scale 2</button></div></div>
+<p class="text-xs text-gray-400 mb-2" id="scaleNote">Scale 2 = target 88–92% (e.g. hypercapnic COPD)</p>
+<div class="news-row" style="border:none;padding:0"><div><p class="text-sm font-medium text-gray-700">SpO₂</p><p class="text-xs text-gray-400">%</p></div><input id="news_spo2" type="number" oninput="recalcNews()" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-200"><span id="sc_spo2" class="score-pill bg-gray-100 text-gray-400">–</span></div>
+</div>
+
+<div class="news-row"><div><p class="text-sm font-medium text-gray-700">Air or oxygen</p><input id="news_o2device" type="text" placeholder="device / flow e.g. 2L NC" class="mt-1 w-44 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-200"></div><div class="flex" style="width:150px"><button class="seg-btn active" id="airbtn" onclick="setO2(false)">Air</button><button class="seg-btn" id="o2btn" onclick="setO2(true)">O₂</button></div><span id="sc_o2" class="score-pill bg-gray-100 text-gray-400">0</span></div>
+
+<div class="news-row"><div><p class="text-sm font-medium text-gray-700">Blood pressure</p><p class="text-xs text-gray-400">systolic / diastolic mmHg</p></div><div class="flex gap-1 items-center"><input id="news_sbp" type="number" placeholder="sys" oninput="recalcNews()" class="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-200"><span class="text-gray-300">/</span><input id="news_dbp" type="number" placeholder="dia" class="w-16 border border-gray-200 rounded-lg px-2 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-200"></div><span id="sc_sbp" class="score-pill bg-gray-100 text-gray-400">–</span></div>
+
+<div class="news-row"><div><p class="text-sm font-medium text-gray-700">Pulse</p><p class="text-xs text-gray-400">beats / min</p></div><input id="news_pulse" type="number" oninput="recalcNews()" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-200"><span id="sc_pulse" class="score-pill bg-gray-100 text-gray-400">–</span></div>
+
+<div class="news-row"><div><p class="text-sm font-medium text-gray-700">Consciousness</p><p class="text-xs text-gray-400">ACVPU</p></div><select id="news_consciousness" onchange="recalcNews()" class="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"><option value="A">Alert</option><option value="C">New confusion</option><option value="V">Voice</option><option value="P">Pain</option><option value="U">Unresponsive</option></select><span id="sc_cons" class="score-pill bg-gray-100 text-gray-400">0</span></div>
+
+<div class="news-row" style="border:none"><div><p class="text-sm font-medium text-gray-700">Temperature</p><p class="text-xs text-gray-400">°C</p></div><input id="news_temp" type="number" step="0.1" oninput="recalcNews()" class="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm text-right focus:outline-none focus:ring-2 focus:ring-blue-200"><span id="sc_temp" class="score-pill bg-gray-100 text-gray-400">–</span></div>
+
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t border-gray-100">
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Recorded by</label><input id="news_by" type="text" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Name"></div>
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Role</label><select id="news_role" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"></select></div>
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Date</label><input id="news_date" type="date" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div>
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Time</label><input id="news_time" type="time" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div>
+</div>
+</div>
+
+<div>
+<div id="newsScoreCard" class="bg-white rounded-2xl p-6 border border-gray-200 sticky top-20 text-center">
+<p class="text-xs uppercase tracking-wide text-gray-400 mb-1">Aggregate NEWS2</p>
+<p id="newsTotal" class="text-5xl font-bold text-gray-300">0</p>
+<div id="newsRiskBadge" class="badge mt-3 bg-gray-100 text-gray-500">Enter observations</div>
+<p id="newsRiskText" class="text-xs text-gray-400 mt-3 leading-relaxed"></p>
+</div>
+<div id="newsActions" class="flex gap-2 mt-4"><button onclick="showScreen('patientRecord')" class="btn-secondary flex-1 py-2.5 rounded-xl text-sm font-medium">Cancel</button><button onclick="saveNews()" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-medium">Save</button></div>
+</div>
+</div>
+</div>
+
+<!-- ===== NOTE FORM (nursing / HCA / general) ===== -->
+<div id="screen-noteForm" class="screen fade-in">
+<button onclick="showScreen('patientRecord')" class="text-sm text-blue-700 hover:text-blue-900 mb-4 flex items-center gap-1"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg>Back to patient</button>
+<div class="bg-white rounded-2xl p-6 border border-gray-200 max-w-2xl">
+<h3 class="text-base font-semibold text-gray-800 mb-1">Note / task</h3>
+<p id="notePatientName" class="text-xs text-gray-400 mb-4"></p>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Category</label><select id="note_category" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"><option>General note</option><option>Bloods taken</option><option>Cannula sited</option><option>Catheter</option><option>Medication given</option><option>Fluid balance</option><option>Wound / dressing</option><option>Referral made</option><option>Family update</option><option>Other</option></select></div>
+<div></div>
+</div>
+<label class="block text-xs font-medium text-gray-500 mb-1">Details</label>
+<textarea id="note_text" rows="6" class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400" placeholder="Document the task done or note..."></textarea>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Recorded by</label><input id="note_by" type="text" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="Name"></div>
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Role</label><select id="note_role" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"></select></div>
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Date</label><input id="note_date" type="date" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div>
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Time</label><input id="note_time" type="time" class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div>
+</div>
+<div id="noteActions" class="flex gap-3 justify-end mt-6"><button onclick="showScreen('patientRecord')" class="btn-secondary px-6 py-2.5 rounded-xl text-sm font-medium">Cancel</button><button onclick="saveNote()" class="btn-primary px-6 py-2.5 rounded-xl text-sm font-medium">Save note</button></div>
+</div>
+</div>
+
+<!-- ===== ADMIN ===== -->
+<div id="screen-admin" class="screen fade-in">
+
+<!-- login gate -->
+<div id="adminLoginView" class="max-w-sm mx-auto mt-8">
+<div class="bg-white rounded-2xl border border-gray-200 p-7">
+<div class="w-12 h-12 bg-blue-800 rounded-xl flex items-center justify-center mx-auto mb-4"><svg width="22" height="22" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg></div>
+<h1 class="text-lg font-semibold text-gray-900 text-center">Admin login</h1>
+<p class="text-sm text-gray-500 mt-1 mb-5 text-center">Restricted to authorised ward admin staff</p>
+<div class="space-y-3">
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Username</label><input id="loginUser" type="text" autocomplete="off" onkeydown="if(event.key==='Enter')adminLogin()" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="username"></div>
+<div><label class="block text-xs font-medium text-gray-500 mb-1">Password</label><input id="loginPass" type="password" onkeydown="if(event.key==='Enter')adminLogin()" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="password"></div>
+</div>
+<p id="loginError" class="text-xs text-red-600 mt-3 hidden">Incorrect username or password.</p>
+<button onclick="adminLogin()" class="btn-primary w-full py-2.5 rounded-xl text-sm font-medium mt-4">Log in</button>
+<p class="text-xs text-gray-400 mt-4 bg-gray-50 rounded-lg py-2 px-3 text-center">Demo login — <span class="font-medium text-gray-600">admin</span> / <span class="font-medium text-gray-600">ward123</span></p>
+</div>
+</div>
+
+<!-- admin panel (shown only when logged in) -->
+<div id="adminPanelView" class="hidden">
+<div class="flex items-center justify-between mb-6"><div><h1 class="text-2xl font-bold text-gray-900">Ward admin</h1><p class="text-gray-500 text-sm mt-1">Manage patients — admit, discharge, re-admit · <span id="adminWho" class="text-gray-400"></span></p></div><div class="flex gap-2"><button onclick="openAddPatientModal()" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Admit patient</button><button onclick="adminLogout()" class="btn-secondary px-4 py-2.5 rounded-xl text-sm font-medium">Log out</button></div></div>
+<div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+<table class="w-full text-sm"><thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide"><tr><th class="text-left px-5 py-3 font-medium">Patient</th><th class="text-left px-5 py-3 font-medium">Hospital no.</th><th class="text-left px-5 py-3 font-medium">Ward</th><th class="text-left px-5 py-3 font-medium">Status</th><th class="text-right px-5 py-3 font-medium">Actions</th></tr></thead>
+<tbody id="adminTableBody"></tbody></table>
+</div>
+<div class="mt-6 bg-white rounded-2xl border border-gray-200 p-5 flex items-center justify-between"><div><p class="font-medium text-gray-800 text-sm">Demo data</p><p class="text-xs text-gray-400 mt-0.5">Wipe everything and restore the original demo patient & entries</p></div><button onclick="resetDemo()" class="btn-danger px-4 py-2 rounded-xl text-sm font-medium">Reset demo</button></div>
+</div>
+
+</div>
 
 </main>
 
-<div id="addPatientModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden"><div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 fade-in"><h2 class="text-lg font-semibold text-gray-800 mb-4">Add patient</h2><div class="space-y-3"><div><label class="block text-xs font-medium text-gray-500 mb-1">Full name</label><input id="modalName" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. John Smith"></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-medium text-gray-500 mb-1">Hospital number</label><input id="modalID" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. H1234567"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">NHS number</label><input id="modalNHS" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. 943 476 5919"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-medium text-gray-500 mb-1">Date of birth</label><input id="modalDOB" type="date" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Ward / bed</label><input id="modalWard" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. 4B / Bed 12"></div></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Consultant</label><input id="modalConsultant" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. Dr Patel"></div></div><div class="flex gap-3 justify-end mt-6"><button onclick="closeAddPatientModal()" class="btn-secondary px-4 py-2 rounded-xl text-sm font-medium">Cancel</button><button onclick="addPatient()" class="btn-primary px-4 py-2 rounded-xl text-sm font-medium">Add patient</button></div></div></div>
+<!-- ===== ADD PATIENT MODAL ===== -->
+<div id="addPatientModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden"><div class="bg-white rounded-2xl p-6 w-full max-w-md mx-4 fade-in"><h2 class="text-lg font-semibold text-gray-800 mb-4">Admit patient</h2><div class="space-y-3"><div><label class="block text-xs font-medium text-gray-500 mb-1">Full name</label><input id="modalName" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. John Smith"></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-medium text-gray-500 mb-1">Hospital number</label><input id="modalID" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. H1234567"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">NHS number</label><input id="modalNHS" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. 943 476 5919"></div></div><div class="grid grid-cols-2 gap-3"><div><label class="block text-xs font-medium text-gray-500 mb-1">Date of birth</label><input id="modalDOB" type="date" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Ward / bed</label><input id="modalWard" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. 4B / Bed 12"></div></div><div><label class="block text-xs font-medium text-gray-500 mb-1">Consultant</label><input id="modalConsultant" type="text" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="e.g. Dr Patel"></div></div><div class="flex gap-3 justify-end mt-6"><button onclick="closeAddPatientModal()" class="btn-secondary px-4 py-2 rounded-xl text-sm font-medium">Cancel</button><button onclick="addPatient()" class="btn-primary px-4 py-2 rounded-xl text-sm font-medium">Admit</button></div></div></div>
+
+<!-- ===== ENTRY TYPE MODAL ===== -->
+<div id="entryTypeModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center hidden"><div class="bg-white rounded-2xl p-6 w-full max-w-lg mx-4 fade-in"><div class="flex items-center justify-between mb-1"><h2 class="text-lg font-semibold text-gray-800">New entry</h2><button onclick="closeEntryTypeModal()" class="text-gray-400 hover:text-gray-600">✕</button></div><p class="text-sm text-gray-500 mb-4">What would you like to document?</p><div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+<div class="type-tile" onclick="chooseEntryType('wardRound')"><div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center mb-2"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div><p class="font-semibold text-sm text-gray-800">Ward round</p><p class="text-xs text-gray-400 mt-0.5">Full clinical review + plan</p></div>
+<div class="type-tile" onclick="chooseEntryType('news')"><div class="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center mb-2"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><p class="font-semibold text-sm text-gray-800">NEWS2</p><p class="text-xs text-gray-400 mt-0.5">Observations & score</p></div>
+<div class="type-tile" onclick="chooseEntryType('note')"><div class="w-9 h-9 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center mb-2"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></div><p class="font-semibold text-sm text-gray-800">Note / task</p><p class="text-xs text-gray-400 mt-0.5">Nursing, HCA, bloods done…</p></div>
+</div></div></div>
 
 <script>
-function getData(){return JSON.parse(localStorage.getItem('wardRoundData')||'{"patients":[],"entries":[]}')}
+/* ---------- data store ---------- */
+function getData(){const d=JSON.parse(localStorage.getItem('wardRoundData')||'{}');d.patients=d.patients||[];d.entries=d.entries||[];d.imaging=d.imaging||[];d.labs=d.labs||[];return d}
 function saveData(d){localStorage.setItem('wardRoundData',JSON.stringify(d))}
-let currentPatientId=null,currentEntryId=null,isViewMode=false,drawingState={};
+let currentPatientId=null,currentEntryId=null,currentEntryType=null,isViewMode=false,drawingState={};
+let currentTab='timeline',selectedImaging=null,imgView={zoom:100,bright:100,contrast:100,anno:true};
+let patientFilter='active',newsScaleSel=1,newsO2Sel=false;
+let adminAuthed=false,adminUser=null;
+/* mock admin accounts — demo only, NOT real security */
+const ADMIN_USERS=[
+{user:'admin',pass:'ward123',name:'Ward Administrator'},
+{user:'jsmith',pass:'sister01',name:'Sister J. Smith'},
+{user:'mthorpe',pass:'clerk22',name:'M. Thorpe (Ward Clerk)'}
+];
 
+/* ---------- role / grade options ---------- */
+const ROLE_OPTIONS=`<option value="">Select</option>
+<optgroup label="Medical"><option>FY1</option><option>FY2</option><option>CT1</option><option>CT2</option><option>CT3</option><option>ST1</option><option>ST2</option><option>ST3</option><option>ST4</option><option>ST5</option><option>ST6</option><option>ST7</option><option>ST8</option><option>SHO</option><option>Registrar</option><option>Consultant</option><option>GP</option></optgroup>
+<optgroup label="Advanced practice"><option>ANP</option><option>ACP</option><option>PA</option></optgroup>
+<optgroup label="Nursing"><option>Staff Nurse (RN)</option><option>Senior Staff Nurse</option><option>Charge Nurse / Sister</option><option>Nursing Associate</option><option>HCA</option><option>Student Nurse</option></optgroup>
+<optgroup label="Admin"><option>Ward Clerk</option><option>Ward Manager</option></optgroup>`;
+function fillRoles(){['fieldSignGrade','news_role','note_role'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=ROLE_OPTIONS})}
+
+/* ---------- NEWS2 scoring ---------- */
+function scoreNEWS(n){
+  const p={};
+  const rr=parseFloat(n.rr);
+  p.rr=isNaN(rr)?null:rr<=8?3:rr<=11?1:rr<=20?0:rr<=24?2:3;
+  const s=parseFloat(n.spo2);
+  if(isNaN(s))p.spo2=null;
+  else if(n.scale==2){
+    if(!n.o2)p.spo2=s<=83?3:s<=85?2:s<=87?1:0;
+    else p.spo2=s<=83?3:s<=85?2:s<=87?1:s<=92?0:s<=94?1:s<=96?2:3;
+  } else p.spo2=s<=91?3:s<=93?2:s<=95?1:0;
+  p.o2=n.o2?2:0;
+  const bp=parseFloat(n.sbp);
+  p.sbp=isNaN(bp)?null:bp<=90?3:bp<=100?2:bp<=110?1:bp<=219?0:3;
+  const pu=parseFloat(n.pulse);
+  p.pulse=isNaN(pu)?null:pu<=40?3:pu<=50?1:pu<=90?0:pu<=110?1:pu<=130?2:3;
+  p.cons=(n.consciousness&&n.consciousness!=='A')?3:0;
+  const t=parseFloat(n.temp);
+  p.temp=isNaN(t)?null:t<=35?3:t<=36?1:t<=38?0:t<=39?1:2;
+  const total=Object.values(p).reduce((a,b)=>a+(b||0),0);
+  return {total,parts:p};
+}
+function newsRisk(total,parts){
+  const anyThree=Object.values(parts).some(v=>v===3);
+  if(total>=7)return{label:'High risk',color:'#991b1b',bg:'#fee2e2',text:'Emergency response — continuous monitoring, urgent critical care / senior review.'};
+  if(total>=5||anyThree)return{label:'Medium risk',color:'#9a3412',bg:'#ffedd5',text:(anyThree&&total<5?'Single parameter scoring 3 — ':'')+'Urgent review by clinician, obs at least hourly.'};
+  if(total>=1)return{label:'Low risk',color:'#854d0e',bg:'#fef9c3',text:'Ward-based response, monitor 4–6 hourly.'};
+  return{label:'Routine',color:'#166534',bg:'#dcfce7',text:'Continue routine monitoring (minimum 12 hourly).'};
+}
+
+/* ---------- seed / demo ---------- */
 function seedMockData(){
 const data=getData();
 if(data.patients.find(p=>p.id==='pt_mock_001'))return;
 const pid='pt_mock_001';
-data.patients.push({id:pid,name:'Margaret Thompson',hospitalId:'H7291034',nhsNumber:'432 891 7654',dob:'1951-03-14',ward:'Ward 6 / Bed 4',consultant:'Dr Patel'});
-const d1=new Date();d1.setDate(d1.getDate()-3);
-data.entries.push({id:'ent_m1',patientId:pid,date:d1.toISOString().split('T')[0],
+const adm=new Date();adm.setDate(adm.getDate()-3);
+data.patients.push({id:pid,name:'Margaret Thompson',hospitalId:'H7291034',nhsNumber:'432 891 7654',dob:'1951-03-14',ward:'Ward 6 / Bed 4',consultant:'Dr Patel',admittedDate:adm.toISOString().split('T')[0],discharged:false,dischargedDate:null});
+const dStr=k=>{const d=new Date();d.setDate(d.getDate()-k);return d.toISOString().split('T')[0]};
+/* ward rounds */
+data.entries.push({id:'ent_m1',patientId:pid,type:'wardRound',date:dStr(3),time:'09:10',
 pmh:'PMH: Type 2 diabetes mellitus, hypertension, atrial fibrillation (on apixaban), COPD (ex-smoker, 30 pack-years), osteoarthritis bilateral knees.\n\nPresenting complaint: 3-day history of productive cough with green sputum, increasing breathlessness (now at rest), and fever (38.4C at home). GP started amoxicillin 5 days ago with no improvement. Reduced oral intake over 48 hours.',
 assessment:'Day 1 post-admission. Admitted via ED with community-acquired pneumonia (CURB-65 score 3). Started on IV co-amoxiclav 1.2g TDS and clarithromycin 500mg BD. O2 requirements: 2L via nasal cannulae to maintain SpO2 94%. CXR shows right lower lobe consolidation. NEWS2 score 5 on admission.\n\nBloods: WCC 15.2, CRP 187, lactate 1.8, creatinine 98 (baseline 82). Blood cultures sent. Sputum culture sent.',
-heartSounds:'Irregularly irregular, no murmurs',
+heartSounds:'Irregularly irregular, no murmurs',otherExam:'',
 systems:'CVS: AF rate controlled (HR 82). Resp: Bilateral air entry, crackles right base, no wheeze. GI: Abdomen soft, non-tender, bowels not yet open. Neuro: GCS 15, alert and orientated. Renal: Catheterised, output 35ml/hr.',
 plan:'1. Continue IV co-amoxiclav + clarithromycin\n2. IV fluids - 0.9% NaCl 1L over 8 hours\n3. Nebulised salbutamol 2.5mg QDS PRN\n4. DVT prophylaxis - continue apixaban (therapeutic dose for AF)\n5. Blood glucose monitoring QDS\n6. Chase blood cultures and sputum culture tomorrow\n7. Repeat bloods in 48 hours (CRP, WCC, U&Es)\n8. Physio referral for chest clearance\n9. Aim: IV to oral switch at 48 hours if improving',
-signName:'Dr Omarjee',signGrade:'FY1',drawings:{}});
-const d2=new Date();d2.setDate(d2.getDate()-2);
-data.entries.push({id:'ent_m2',patientId:pid,date:d2.toISOString().split('T')[0],
+signName:'Dr A',signGrade:'FY1',drawings:{}});
+data.entries.push({id:'ent_m2',patientId:pid,type:'wardRound',date:dStr(2),time:'09:25',
 pmh:'PMH: Type 2 diabetes mellitus, hypertension, atrial fibrillation (on apixaban), COPD (ex-smoker, 30 pack-years), osteoarthritis bilateral knees.\n\nPresenting complaint: Community-acquired pneumonia (right lower lobe). Admitted 2 days ago with productive cough, breathlessness, and fever. CURB-65 score 3 on admission.',
 assessment:'Day 2 post-admission. Clinically improving. Temperature settled overnight (Tmax 37.3). O2 requirements reduced - now on room air, SpO2 96%. Cough still productive but less frequent. Eating and drinking better. NEWS2 score 2.\n\nBloods (today): WCC 11.8 (down from 15.2), CRP 124 (down from 187), creatinine 88 (improving). Blood cultures: no growth at 48 hours. Sputum culture: Streptococcus pneumoniae - sensitive to amoxicillin.',
-heartSounds:'Irregularly irregular, no murmurs',
+heartSounds:'Irregularly irregular, no murmurs',otherExam:'',
 systems:'CVS: AF, rate controlled HR 78. Resp: Air entry improving, crackles right base reducing, no wheeze. SpO2 96% on air. GI: Abdomen soft, bowels opened. Neuro: GCS 15. Renal: Good urine output, catheter removed.',
 plan:'1. IV to oral switch TODAY - amoxicillin 500mg TDS + clarithromycin 500mg BD (5 more days)\n2. Stop IV fluids - tolerating oral intake\n3. Continue nebs PRN\n4. Physio to continue chest clearance\n5. Repeat CRP in 48 hours\n6. If continues to improve, plan discharge in 24-48 hours\n7. Pre-discharge: check mobility with physio, ensure GP follow-up',
-signName:'Dr Omarjee',signGrade:'FY1',drawings:{}});
-const d3=new Date();d3.setDate(d3.getDate()-1);
-data.entries.push({id:'ent_m3',patientId:pid,date:d3.toISOString().split('T')[0],
+signName:'Dr A',signGrade:'FY1',drawings:{}});
+data.entries.push({id:'ent_m3',patientId:pid,type:'wardRound',date:dStr(1),time:'09:05',
 pmh:'PMH: Type 2 diabetes mellitus, hypertension, atrial fibrillation (on apixaban), COPD (ex-smoker, 30 pack-years), osteoarthritis bilateral knees.\n\nPresenting complaint: Community-acquired pneumonia (right lower lobe). Admitted 3 days ago. On oral antibiotics since yesterday. Clinically improving.',
 assessment:'Day 3 post-admission. Continued improvement. Apyrexial for 48 hours. SpO2 97% on room air consistently. Cough improving, sputum clearing. Mobilising to toilet independently with frame. Eating well.\n\nBloods (today): CRP 54 (down from 124). WCC 9.2 (normalised). U&Es normal.',
-heartSounds:'Irregularly irregular, no murmurs',
+heartSounds:'Irregularly irregular, no murmurs',otherExam:'',
 systems:'CVS: AF, rate controlled. Resp: Good air entry bilaterally, minimal crackles right base. GI: Eating well, bowels regular. Neuro: GCS 15, bright and engaging. MSK: Mobilising with frame, physio happy with progress.',
 plan:'1. Continue oral amoxicillin + clarithromycin (3 days remaining)\n2. Medically fit for discharge TODAY\n3. Discharge checklist:\n   - TTO medications prepared\n   - GP letter dictated\n   - Follow-up CXR in 6 weeks (request sent)\n   - Patient education: complete antibiotic course\n4. Ensure family aware of discharge\n5. Discharge expected by 14:00',
-signName:'Dr Omarjee',signGrade:'FY1',drawings:{}});
+signName:'Dr A',signGrade:'FY1',drawings:{}});
+/* NEWS observations (improving trend) */
+data.entries.push({id:'ent_n1',patientId:pid,type:'news',date:dStr(3),time:'08:30',
+news:{rr:'21',spo2:'95',scale:1,o2:true,o2device:'2L NC',sbp:'124',dbp:'78',pulse:'88',consciousness:'A',temp:'37.9'},signName:'S. Okafor',signGrade:'Staff Nurse (RN)'});
+data.entries.push({id:'ent_n2',patientId:pid,type:'news',date:dStr(2),time:'08:15',
+news:{rr:'19',spo2:'95',scale:1,o2:false,o2device:'',sbp:'118',dbp:'74',pulse:'92',consciousness:'A',temp:'37.3'},signName:'S. Okafor',signGrade:'Staff Nurse (RN)'});
+data.entries.push({id:'ent_n3',patientId:pid,type:'news',date:dStr(1),time:'08:20',
+news:{rr:'17',spo2:'97',scale:1,o2:false,o2device:'',sbp:'120',dbp:'76',pulse:'80',consciousness:'A',temp:'36.8'},signName:'D. Cole',signGrade:'HCA'});
+/* nursing note */
+data.entries.push({id:'ent_t1',patientId:pid,type:'note',location:'Ward',date:dStr(2),time:'11:40',
+noteCategory:'Bloods taken',noteText:'Venepuncture: FBC, U&E, CRP sent to lab at 11:35. Right ACF, single attempt, patient tolerated well.',signName:'D. Cole',signGrade:'HCA'});
+/* ED journey (before the ward entries on admission day) */
+data.entries.push({id:'ent_ed1',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:dStr(3),time:'04:30',noteCategory:'General note',noteText:'ED triage: 74F, 3-day productive cough, breathlessness at rest, fever. Known COPD/AF. Manchester triage category 2.',signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'});
+data.entries.push({id:'ent_ed2',patientId:pid,type:'news',location:'ED',source:'ED Tracker',date:dStr(3),time:'04:45',news:{rr:'22',spo2:'94',scale:1,o2:true,o2device:'2L NC',sbp:'118',dbp:'70',pulse:'92',consciousness:'A',temp:'38.4'},signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'});
+data.entries.push({id:'ent_ed3',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:dStr(3),time:'05:00',noteCategory:'Bloods taken',noteText:'FBC, U&E, CRP, lactate, blood cultures sent. Cannula sited right forearm. Sputum sample obtained.',signName:'ED SHO',signGrade:'SHO'});
+data.entries.push({id:'ent_ed4',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:dStr(3),time:'05:40',noteCategory:'General note',noteText:'Portable CXR performed — see Imaging.',signName:'ED SHO',signGrade:'SHO'});
+data.entries.push({id:'ent_ed5',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:dStr(3),time:'06:30',noteCategory:'General note',noteText:'ED senior review: community-acquired pneumonia, CURB-65 3. IV co-amoxiclav + clarithromycin commenced. For admission under medicine.',signName:'ED Registrar',signGrade:'Registrar'});
+data.entries.push({id:'ent_tr1',patientId:pid,type:'transfer',location:'ED',source:'ED Tracker',date:dStr(3),time:'07:30',from:'ED Majors',to:'Ward 6 / Bed 4',signName:'ED Coordinator',signGrade:'Charge Nurse / Sister'});
+/* labs (cumulative, improving) */
+data.labs.push(
+{id:'lab_fbc1',patientId:pid,panel:'FBC',date:dStr(3),time:'05:10',source:'ED',results:[{name:'Haemoglobin',value:'118',unit:'g/L',low:115,high:165},{name:'White cell count',value:'15.2',unit:'×10⁹/L',low:4.0,high:11.0},{name:'Neutrophils',value:'13.1',unit:'×10⁹/L',low:2.0,high:7.5},{name:'Platelets',value:'388',unit:'×10⁹/L',low:150,high:400}]},
+{id:'lab_fbc2',patientId:pid,panel:'FBC',date:dStr(2),time:'06:00',results:[{name:'Haemoglobin',value:'116',unit:'g/L',low:115,high:165},{name:'White cell count',value:'11.8',unit:'×10⁹/L',low:4.0,high:11.0},{name:'Neutrophils',value:'9.4',unit:'×10⁹/L',low:2.0,high:7.5},{name:'Platelets',value:'372',unit:'×10⁹/L',low:150,high:400}]},
+{id:'lab_fbc3',patientId:pid,panel:'FBC',date:dStr(1),time:'06:00',results:[{name:'Haemoglobin',value:'117',unit:'g/L',low:115,high:165},{name:'White cell count',value:'9.2',unit:'×10⁹/L',low:4.0,high:11.0},{name:'Neutrophils',value:'6.8',unit:'×10⁹/L',low:2.0,high:7.5},{name:'Platelets',value:'360',unit:'×10⁹/L',low:150,high:400}]},
+{id:'lab_ue1',patientId:pid,panel:'U&E',date:dStr(3),time:'05:10',source:'ED',results:[{name:'Sodium',value:'137',unit:'mmol/L',low:133,high:146},{name:'Potassium',value:'4.1',unit:'mmol/L',low:3.5,high:5.3},{name:'Urea',value:'9.2',unit:'mmol/L',low:2.5,high:7.8},{name:'Creatinine',value:'98',unit:'µmol/L',low:45,high:84},{name:'eGFR',value:'52',unit:'mL/min',low:60,high:null}]},
+{id:'lab_ue2',patientId:pid,panel:'U&E',date:dStr(2),time:'06:00',results:[{name:'Sodium',value:'139',unit:'mmol/L',low:133,high:146},{name:'Potassium',value:'4.3',unit:'mmol/L',low:3.5,high:5.3},{name:'Urea',value:'7.0',unit:'mmol/L',low:2.5,high:7.8},{name:'Creatinine',value:'88',unit:'µmol/L',low:45,high:84},{name:'eGFR',value:'58',unit:'mL/min',low:60,high:null}]},
+{id:'lab_ue3',patientId:pid,panel:'U&E',date:dStr(1),time:'06:00',results:[{name:'Sodium',value:'140',unit:'mmol/L',low:133,high:146},{name:'Potassium',value:'4.2',unit:'mmol/L',low:3.5,high:5.3},{name:'Urea',value:'5.8',unit:'mmol/L',low:2.5,high:7.8},{name:'Creatinine',value:'76',unit:'µmol/L',low:45,high:84},{name:'eGFR',value:'70',unit:'mL/min',low:60,high:null}]},
+{id:'lab_crp1',patientId:pid,panel:'CRP',date:dStr(3),time:'05:10',source:'ED',results:[{name:'C-reactive protein',value:'187',unit:'mg/L',low:null,high:5}]},
+{id:'lab_crp2',patientId:pid,panel:'CRP',date:dStr(2),time:'06:00',results:[{name:'C-reactive protein',value:'124',unit:'mg/L',low:null,high:5}]},
+{id:'lab_crp3',patientId:pid,panel:'CRP',date:dStr(1),time:'06:00',results:[{name:'C-reactive protein',value:'54',unit:'mg/L',low:null,high:5}]}
+);
+/* imaging */
+const fu=new Date();fu.setDate(fu.getDate()+39);
+data.imaging.push(
+{id:'img1',patientId:pid,accession:'ACC-CR-88213',modality:'CR',description:'Chest X-ray (PA, erect)',date:dStr(3),time:'05:40',source:'ED PACS',status:'final',hasImage:true,reportStatus:'final',reportedBy:'Dr R. Iyer (Consultant Radiologist)',reportedAt:dStr(3)+' 11:20',conclusion:'Right lower lobe consolidation consistent with pneumonia. No effusion or pneumothorax.',report:'Clinical details: Cough, fever, breathlessness. ?LRTI.\n\nFindings: Patchy airspace opacification in the right lower zone consistent with consolidation. The left lung is clear. Cardiomediastinal contour within normal limits. No pleural effusion. No pneumothorax. Bony thorax unremarkable.\n\nConclusion: Right lower lobe pneumonia. Recommend follow-up radiograph in 6 weeks to confirm resolution.'},
+{id:'img2',patientId:pid,accession:'ACC-CR-90551',modality:'CR',description:'Chest X-ray (follow-up)',date:fu.toISOString().split('T')[0],time:'',source:'PACS',status:'requested',hasImage:false,reportStatus:'pending',conclusion:'',report:'Requested at discharge — to be performed at 6-week respiratory follow-up to confirm radiographic resolution.'}
+);
 saveData(data);
 }
+function resetDemo(){if(!confirm('Reset all data back to the original demo? Any patients or entries you have added will be permanently deleted.'))return;localStorage.removeItem('wardRoundData');seedMockData();patientFilter='active';showScreen('patientList')}
 
+/* ---------- AI summary ---------- */
 function generateAISummary(entries){
-if(entries.length===0)return '';
+const wr=entries.filter(e=>e.type==='wardRound').sort((a,b)=>cmp(b)-cmp(a));
+if(wr.length===0)return '';
 const lines=[];
-const pmhE=entries.find(e=>e.pmh&&e.pmh.includes('PMH:'));
+const pmhE=wr.find(e=>e.pmh&&e.pmh.includes('PMH:'));
 if(pmhE){const m=pmhE.pmh.match(/PMH:([^\n]+)/);if(m)lines.push('PMH:'+m[1].trim())}
-const pcE=entries.find(e=>e.pmh&&e.pmh.toLowerCase().includes('presenting complaint'));
+const pcE=wr.find(e=>e.pmh&&e.pmh.toLowerCase().includes('presenting complaint'));
 if(pcE){const m=pcE.pmh.match(/[Pp]resenting complaint[:\s]+([^\n]+)/);if(m)lines.push('\nPresenting complaint: '+m[1].trim())}
-if(entries.length>=2){
+if(wr.length>=2){
 lines.push('\n--- Hospital course summary ---');
-const adm=entries[entries.length-1],lat=entries[0];
-const days=Math.round((new Date(lat.date)-new Date(adm.date))/864e5)+1;
+const admE=wr[wr.length-1],lat=wr[0];
+const days=Math.round((new Date(lat.date)-new Date(admE.date))/864e5)+1;
 lines.push('Day '+(days+1)+' of admission.');
-const all=entries.map(e=>e.assessment||'').join(' ').toLowerCase();
+const all=wr.map(e=>e.assessment||'').join(' ').toLowerCase();
 if(all.includes('improving')||all.includes('improvement'))lines.push('Trend: Clinically improving.');
 else if(all.includes('deteriorat')||all.includes('worsening'))lines.push('Trend: Clinical concern - deterioration noted.');
 else lines.push('Trend: Stable.');
-const o2=lat.assessment&&lat.assessment.match(/SpO2\s*(\d+)%?\s*(on\s+[\w\s]+)?/i);
-if(o2)lines.push('O2: SpO2 '+o2[1]+'% '+(o2[2]||'').trim());
 const crp=lat.assessment&&lat.assessment.match(/CRP\s*([\d.]+)/i);
 const wcc=lat.assessment&&lat.assessment.match(/WCC\s*([\d.]+)/i);
 if(crp||wcc){let b='Latest bloods:';if(wcc)b+=' WCC '+wcc[1];if(crp)b+=(wcc?',':'')+' CRP '+crp[1];lines.push(b)}
 }
-const planE=entries.find(e=>e.plan&&e.plan.trim().length>20);
+const planE=wr.find(e=>e.plan&&e.plan.trim().length>20);
 if(planE){lines.push('\n--- Last documented plan ---');planE.plan.split('\n').filter(l=>l.trim()).slice(0,5).forEach(l=>lines.push(l.trim()));if(planE.plan.split('\n').filter(l=>l.trim()).length>5)lines.push('(...continued)')}
 return lines.join('\n');
 }
 
-function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');window.scrollTo(0,0);if(n==='patientList')renderPatientList();if(n==='patientRecord')renderPatientRecord()}
+/* ---------- helpers ---------- */
+function cmp(e){return new Date((e.date||'')+'T'+(e.time||'00:00'))}
+function fmtDate(d){return new Date(d).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}
+function latestNews(pid){const data=getData();const n=data.entries.filter(e=>e.patientId===pid&&e.type==='news').sort((a,b)=>cmp(b)-cmp(a))[0];if(!n)return null;const sc=scoreNEWS(n.news);return{entry:n,score:sc.total,parts:sc.parts}}
+const TYPE_META={wardRound:{label:'Ward round',cls:'bg-blue-50 text-blue-700'},news:{label:'NEWS2',cls:'bg-rose-50 text-rose-700'},note:{label:'Note',cls:'bg-teal-50 text-teal-700'},transfer:{label:'Transfer',cls:'bg-amber-50 text-amber-700'}};
+
+/* ---------- navigation ---------- */
+function showScreen(n){
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById('screen-'+n).classList.add('active');window.scrollTo(0,0);
+document.getElementById('nav-patients').classList.toggle('active',n==='patientList');
+document.getElementById('nav-admin').classList.toggle('active',n==='admin');
+if(n==='patientList')renderPatientList();
+if(n==='patientRecord')renderPatientRecord();
+if(n==='admin')renderAdmin();
+}
+
+/* ---------- patient list ---------- */
+function setPatientFilter(f){patientFilter=f;document.getElementById('filt-active').classList.toggle('active',f==='active');document.getElementById('filt-discharged').classList.toggle('active',f==='discharged');renderPatientList()}
 function renderPatientList(){
 const data=getData(),g=document.getElementById('patientGrid'),e=document.getElementById('emptyState');
-if(data.patients.length===0){g.innerHTML='';e.classList.remove('hidden');return}e.classList.add('hidden');
-g.innerHTML=data.patients.map(p=>{const ec=data.entries.filter(e=>e.patientId===p.id).length;const last=data.entries.filter(e=>e.patientId===p.id).sort((a,b)=>new Date(b.date)-new Date(a.date))[0];return`<div class="bg-white rounded-2xl p-5 border border-gray-200 cursor-pointer entry-card transition-all" onclick="openPatient('${p.id}')"><div class="flex items-start justify-between mb-3"><div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-700 font-semibold text-sm">${p.name.split(' ').map(n=>n[0]).join('').toUpperCase()}</div><span class="badge bg-gray-100 text-gray-600">${ec} ${ec===1?'entry':'entries'}</span></div><h3 class="font-semibold text-gray-900">${p.name}</h3><p class="text-xs text-gray-500 mt-1">${p.hospitalId} · ${p.ward||'No ward'}</p>${last?`<p class="text-xs text-gray-400 mt-2">Last entry: ${new Date(last.date).toLocaleDateString('en-GB')}</p>`:''}</div>`}).join('')}
+const list=data.patients.filter(p=>patientFilter==='active'?!p.discharged:p.discharged);
+if(list.length===0){g.innerHTML='';e.classList.remove('hidden');return}e.classList.add('hidden');
+g.innerHTML=list.map(p=>{
+const ec=data.entries.filter(e=>e.patientId===p.id).length;
+const last=data.entries.filter(e=>e.patientId===p.id).sort((a,b)=>cmp(b)-cmp(a))[0];
+const ln=latestNews(p.id);
+const newsBadge=ln?`<span class="badge" style="background:${newsRisk(ln.score,ln.parts).bg};color:${newsRisk(ln.score,ln.parts).color}">NEWS ${ln.score}</span>`:'';
+return`<div class="bg-white rounded-2xl p-5 border border-gray-200 cursor-pointer entry-card transition-all ${p.discharged?'opacity-70':''}" onclick="openPatient('${p.id}')"><div class="flex items-start justify-between mb-3"><div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-700 font-semibold text-sm">${p.name.split(' ').map(n=>n[0]).join('').toUpperCase()}</div><div class="flex flex-col items-end gap-1">${newsBadge}<span class="badge bg-gray-100 text-gray-600">${ec} ${ec===1?'entry':'entries'}</span></div></div><h3 class="font-semibold text-gray-900">${p.name}</h3><p class="text-xs text-gray-500 mt-1">${p.hospitalId} · ${p.ward||'No ward'}</p>${p.discharged?`<p class="text-xs text-gray-400 mt-2">Discharged: ${p.dischargedDate?new Date(p.dischargedDate).toLocaleDateString('en-GB'):'-'}</p>`:last?`<p class="text-xs text-gray-400 mt-2">Last entry: ${new Date(last.date).toLocaleDateString('en-GB')}</p>`:''}</div>`}).join('')}
+
+/* ---------- add patient modal ---------- */
 function openAddPatientModal(){document.getElementById('addPatientModal').classList.remove('hidden')}
 function closeAddPatientModal(){document.getElementById('addPatientModal').classList.add('hidden');['modalName','modalID','modalNHS','modalDOB','modalWard','modalConsultant'].forEach(id=>document.getElementById(id).value='')}
-function addPatient(){const n=document.getElementById('modalName').value.trim();if(!n)return alert('Please enter a patient name.');const data=getData();data.patients.push({id:'pt_'+Date.now(),name:n,hospitalId:document.getElementById('modalID').value.trim()||'N/A',nhsNumber:document.getElementById('modalNHS').value.trim(),dob:document.getElementById('modalDOB').value,ward:document.getElementById('modalWard').value.trim(),consultant:document.getElementById('modalConsultant').value.trim()});saveData(data);closeAddPatientModal();renderPatientList()}
+function addPatient(){const n=document.getElementById('modalName').value.trim();if(!n)return alert('Please enter a patient name.');const data=getData();data.patients.push({id:'pt_'+Date.now(),name:n,hospitalId:document.getElementById('modalID').value.trim()||'N/A',nhsNumber:document.getElementById('modalNHS').value.trim(),dob:document.getElementById('modalDOB').value,ward:document.getElementById('modalWard').value.trim(),consultant:document.getElementById('modalConsultant').value.trim(),admittedDate:new Date().toISOString().split('T')[0],discharged:false,dischargedDate:null});saveData(data);closeAddPatientModal();patientFilter='active';if(document.getElementById('screen-admin').classList.contains('active'))renderAdmin();else renderPatientList()}
+
+/* ---------- patient record ---------- */
 function openPatient(id){currentPatientId=id;showScreen('patientRecord')}
 function renderPatientRecord(){
 const data=getData(),p=data.patients.find(p=>p.id===currentPatientId);if(!p)return showScreen('patientList');
 const age=p.dob?Math.floor((Date.now()-new Date(p.dob))/31557600000):'--';
-document.getElementById('patientHeader').innerHTML=`<div class="flex items-center justify-between"><div><h2 class="text-xl font-bold text-gray-900">${p.name}</h2><p class="text-sm text-gray-500 mt-1">${p.hospitalId} · DOB: ${p.dob?new Date(p.dob).toLocaleDateString('en-GB'):'N/A'} (${age} yrs) · ${p.ward||'No ward'} · ${p.consultant||'No consultant'}</p></div><button onclick="deletePatient('${p.id}')" class="text-red-400 hover:text-red-600 text-xs">Delete</button></div>`;
-const entries=data.entries.filter(e=>e.patientId===currentPatientId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+document.getElementById('patientHeader').innerHTML=`<div class="flex items-center justify-between"><div><div class="flex items-center gap-2"><h2 class="text-xl font-bold text-gray-900">${p.name}</h2>${p.discharged?'<span class="badge bg-gray-200 text-gray-600">Discharged</span>':'<span class="badge bg-green-100 text-green-700">Admitted</span>'}</div><p class="text-sm text-gray-500 mt-1">${p.hospitalId} · DOB: ${p.dob?new Date(p.dob).toLocaleDateString('en-GB'):'N/A'} (${age} yrs) · ${p.ward||'No ward'} · ${p.consultant||'No consultant'}</p></div></div>`;
+const ln=latestNews(currentPatientId);
+const banner=document.getElementById('recordNewsBanner');
+if(ln){const r=newsRisk(ln.score,ln.parts);banner.innerHTML=`<div class="rounded-2xl p-4 flex items-center justify-between" style="background:${r.bg}"><div class="flex items-center gap-3"><div class="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-xl" style="background:#fff;color:${r.color}">${ln.score}</div><div><p class="font-semibold text-sm" style="color:${r.color}">Latest NEWS2 — ${r.label}</p><p class="text-xs" style="color:${r.color};opacity:.8">${fmtDate(ln.entry.date)} ${ln.entry.time||''} · recorded by ${ln.entry.signName||'-'}</p></div></div></div>`}
+else banner.innerHTML='';
+currentTab='timeline';switchTab('timeline');}
+
+function switchTab(t){currentTab=t;
+document.querySelectorAll('.rec-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+['timeline','results','imaging','journey'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('hidden',x!==t));
+if(t==='timeline')renderTimelineTab();else if(t==='results')renderResultsTab();else if(t==='imaging')renderImagingTab();else if(t==='journey')renderJourneyTab();}
+
+function renderTimelineTab(){
+const data=getData();
+const entries=data.entries.filter(e=>e.patientId===currentPatientId).sort((a,b)=>cmp(b)-cmp(a));
 const tl=document.getElementById('entryTimeline'),ne=document.getElementById('noEntries');
 if(entries.length===0){tl.innerHTML='';ne.classList.remove('hidden');return}ne.classList.add('hidden');
-tl.innerHTML=entries.map(e=>`<div class="bg-white rounded-2xl p-5 border border-gray-200 mb-3 cursor-pointer entry-card transition-all" onclick="viewEntry('${e.id}')"><div class="flex items-center justify-between mb-2"><span class="font-semibold text-gray-800 text-sm">${new Date(e.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span><span class="badge bg-blue-50 text-blue-700">${e.signGrade||'N/A'}</span></div><p class="text-sm text-gray-600 line-clamp-2">${e.assessment?e.assessment.substring(0,150)+(e.assessment.length>150?'...':''):'No assessment recorded'}</p><p class="text-xs text-gray-400 mt-2">Signed: ${e.signName||'Not signed'}</p></div>`).join('')}
-function deletePatient(id){if(!confirm('Delete this patient and all their entries?'))return;const data=getData();data.patients=data.patients.filter(p=>p.id!==id);data.entries=data.entries.filter(e=>e.patientId!==id);saveData(data);showScreen('patientList')}
-function startNewEntry(){currentEntryId=null;isViewMode=false;showScreen('entryForm');populateEntryForm()}
-function viewEntry(id){currentEntryId=id;isViewMode=true;showScreen('entryForm');populateEntryForm()}
-function populateEntryForm(){
+tl.innerHTML=entries.map(e=>{
+const loc=e.location||'Ward';
+const locBadge=loc==='ED'?'<span class="badge bg-amber-100 text-amber-700">ED</span>':'';
+if(e.type==='transfer')return`<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3 flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">⇄</div><div><p class="font-semibold text-amber-800 text-sm">Transfer · ${e.from} → ${e.to}</p><p class="text-xs" style="color:#b45309">${fmtDate(e.date)} ${e.time||''} · ${e.signName||''}${e.signGrade?' ('+e.signGrade+')':''}</p></div></div>`;
+const meta=TYPE_META[e.type]||TYPE_META.note;
+let summary='',extra='';
+if(e.type==='wardRound'){summary=e.assessment?e.assessment.substring(0,150)+(e.assessment.length>150?'...':''):'No assessment recorded'}
+else if(e.type==='news'){const sc=scoreNEWS(e.news),r=newsRisk(sc.total,sc.parts);summary=`RR ${e.news.rr||'-'} · SpO₂ ${e.news.spo2||'-'}% ${e.news.o2?'(O₂)':'(air)'} · BP ${e.news.sbp||'-'}/${e.news.dbp||'-'} · HR ${e.news.pulse||'-'} · ${e.news.temp||'-'}°C`;extra=`<span class="badge" style="background:${r.bg};color:${r.color}">NEWS ${sc.total} · ${r.label}</span>`}
+else{summary=e.noteText?e.noteText.substring(0,150)+(e.noteText.length>150?'...':''):'';extra=`<span class="badge bg-teal-50 text-teal-700">${e.noteCategory||'Note'}</span>`}
+return`<div class="bg-white rounded-2xl p-5 border border-gray-200 mb-3 cursor-pointer entry-card transition-all" onclick="viewEntry('${e.id}')"><div class="flex items-center justify-between mb-2 flex-wrap gap-1"><div class="flex items-center gap-2">${locBadge}<span class="badge ${meta.cls}">${meta.label}</span><span class="font-semibold text-gray-800 text-sm">${fmtDate(e.date)}${e.time?' · '+e.time:''}</span></div>${extra||`<span class="badge bg-gray-50 text-gray-500">${e.signGrade||''}</span>`}</div><p class="text-sm text-gray-600">${summary}</p><p class="text-xs text-gray-400 mt-2">${e.type==='wardRound'?'Signed':'By'}: ${e.signName||'—'}${e.signGrade?' ('+e.signGrade+')':''}</p></div>`}).join('')}
+
+/* ---------- entry type modal ---------- */
+function openEntryTypeModal(){document.getElementById('entryTypeModal').classList.remove('hidden')}
+function closeEntryTypeModal(){document.getElementById('entryTypeModal').classList.add('hidden')}
+function chooseEntryType(type){closeEntryTypeModal();currentEntryType=type;currentEntryId=null;isViewMode=false;
+if(type==='wardRound'){showScreen('wardRound');populateWardRound()}
+else if(type==='news'){showScreen('newsForm');populateNewsForm()}
+else{showScreen('noteForm');populateNoteForm()}}
+
+/* ---------- view existing entry ---------- */
+function viewEntry(id){const data=getData();const e=data.entries.find(x=>x.id===id);if(!e)return;currentEntryId=id;currentEntryType=e.type;isViewMode=true;
+if(e.type==='wardRound'){showScreen('wardRound');populateWardRound()}
+else if(e.type==='news'){showScreen('newsForm');populateNewsForm()}
+else{showScreen('noteForm');populateNoteForm()}}
+
+/* ---------- WARD ROUND form ---------- */
+function populateWardRound(){
 const data=getData(),p=data.patients.find(p=>p.id===currentPatientId);if(!p)return;
 const age=p.dob?Math.floor((Date.now()-new Date(p.dob))/31557600000):'--';
-document.getElementById('entryPatientDetails').innerHTML=`<div><span class="text-xs text-gray-400 block">Name</span><span class="font-medium text-gray-800">${p.name}</span></div><div><span class="text-xs text-gray-400 block">Hospital No.</span><span class="font-medium text-gray-800">${p.hospitalId}</span></div><div><span class="text-xs text-gray-400 block">DOB / Age</span><span class="font-medium text-gray-800">${p.dob?new Date(p.dob).toLocaleDateString('en-GB'):'N/A'} (${age})</span></div><div><span class="text-xs text-gray-400 block">Ward</span><span class="font-medium text-gray-800">${p.ward||'N/A'}</span></div>`;
-const prev=data.entries.filter(e=>e.patientId===currentPatientId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+document.getElementById('wrPatientDetails').innerHTML=`<div><span class="text-xs text-gray-400 block">Name</span><span class="font-medium text-gray-800">${p.name}</span></div><div><span class="text-xs text-gray-400 block">Hospital No.</span><span class="font-medium text-gray-800">${p.hospitalId}</span></div><div><span class="text-xs text-gray-400 block">DOB / Age</span><span class="font-medium text-gray-800">${p.dob?new Date(p.dob).toLocaleDateString('en-GB'):'N/A'} (${age})</span></div><div><span class="text-xs text-gray-400 block">Ward</span><span class="font-medium text-gray-800">${p.ward||'N/A'}</span></div>`;
+/* latest NEWS banner inside form */
+const ln=latestNews(currentPatientId),wrn=document.getElementById('wrLatestNews');
+if(ln){const r=newsRisk(ln.score,ln.parts);wrn.innerHTML=`<section class="rounded-2xl p-4 border" style="background:${r.bg};border-color:${r.bg}"><div class="flex items-center gap-3"><div class="w-11 h-11 rounded-xl bg-white flex items-center justify-center font-bold text-lg" style="color:${r.color}">${ln.score}</div><div><p class="font-semibold text-sm" style="color:${r.color}">Latest NEWS2: ${ln.score} (${r.label})</p><p class="text-xs" style="color:${r.color};opacity:.8">RR ${ln.entry.news.rr} · SpO₂ ${ln.entry.news.spo2}% · BP ${ln.entry.news.sbp}/${ln.entry.news.dbp} · HR ${ln.entry.news.pulse} · ${ln.entry.news.temp}°C — ${fmtDate(ln.entry.date)} ${ln.entry.time||''}</p></div></div></section>`}else wrn.innerHTML='';
+const prev=data.entries.filter(e=>e.patientId===currentPatientId);
 document.querySelectorAll('.drawing-canvas').forEach(c=>{const ctx=c.getContext('2d');if(ctx)ctx.clearRect(0,0,c.width,c.height)});
 if(currentEntryId){
 const entry=data.entries.find(e=>e.id===currentEntryId);if(!entry)return;
-document.getElementById('fieldPMH').value=entry.pmh||'';document.getElementById('fieldAssessment').value=entry.assessment||'';document.getElementById('fieldHeartSounds').value=entry.heartSounds||'';document.getElementById('fieldSystems').value=entry.systems||'';document.getElementById('fieldPlan').value=entry.plan||'';document.getElementById('fieldSignName').value=entry.signName||'';document.getElementById('fieldSignGrade').value=entry.signGrade||'';document.getElementById('fieldSignDate').value=entry.date||'';
+setVal('fieldPMH',entry.pmh);setVal('fieldAssessment',entry.assessment);setVal('fieldHeartSounds',entry.heartSounds);setVal('fieldOtherExam',entry.otherExam);setVal('fieldSystems',entry.systems);setVal('fieldPlan',entry.plan);setVal('fieldSignName',entry.signName);setVal('fieldSignGrade',entry.signGrade);setVal('fieldSignDate',entry.date);setVal('fieldSignTime',entry.time);
 document.getElementById('aiBadge').style.display='none';document.getElementById('aiSummaryNote').textContent='Viewing saved entry'+(isViewMode?' (read-only)':'');
-if(isViewMode){document.querySelectorAll('#entryFormContent textarea, #entryFormContent input, #entryFormContent select').forEach(el=>el.setAttribute('disabled','true'));document.getElementById('entryActions').classList.add('hidden')}
+if(isViewMode){document.querySelectorAll('#wardRoundContent textarea, #wardRoundContent input, #wardRoundContent select').forEach(el=>el.setAttribute('disabled','true'));document.getElementById('wrActions').classList.add('hidden')}
 setTimeout(()=>{['lungs','abdomen','limbs'].forEach(d=>{if(entry.drawings&&entry.drawings[d]){const canvas=document.querySelector(`canvas[data-diagram="${d}"]`);if(canvas){const img=new Image();img.onload=()=>canvas.getContext('2d').drawImage(img,0,0);img.src=entry.drawings[d]}}})},150);
 }else{
-document.getElementById('fieldPMH').value=generateAISummary(prev);document.getElementById('fieldAssessment').value='';document.getElementById('fieldHeartSounds').value='';document.getElementById('fieldSystems').value='';document.getElementById('fieldPlan').value='';document.getElementById('fieldSignName').value='';document.getElementById('fieldSignGrade').value='';document.getElementById('fieldSignDate').value=new Date().toISOString().split('T')[0];
-document.querySelectorAll('#entryFormContent textarea, #entryFormContent input, #entryFormContent select').forEach(el=>el.removeAttribute('disabled'));document.getElementById('entryActions').classList.remove('hidden');
-document.getElementById('aiBadge').style.display=prev.length>0?'inline-block':'none';document.getElementById('aiSummaryNote').textContent=prev.length>0?'Auto-generated from previous entries - editable':'No previous entries to summarise';
+setVal('fieldPMH',generateAISummary(prev));['fieldAssessment','fieldHeartSounds','fieldOtherExam','fieldSystems','fieldPlan','fieldSignName','fieldSignGrade'].forEach(id=>setVal(id,''));
+setVal('fieldSignDate',new Date().toISOString().split('T')[0]);setVal('fieldSignTime',new Date().toTimeString().slice(0,5));
+document.querySelectorAll('#wardRoundContent textarea, #wardRoundContent input, #wardRoundContent select').forEach(el=>el.removeAttribute('disabled'));document.getElementById('wrActions').classList.remove('hidden');
+const hasWR=prev.some(e=>e.type==='wardRound');
+document.getElementById('aiBadge').style.display=hasWR?'inline-block':'none';document.getElementById('aiSummaryNote').textContent=hasWR?'Auto-generated from previous entries - editable':'No previous ward rounds to summarise';
 }
 setTimeout(initDrawingCanvases,150)}
-function saveEntry(){
+function setVal(id,v){const el=document.getElementById(id);if(el)el.value=v||''}
+function saveWardRound(){
 const data=getData(),drawings={};
 ['lungs','abdomen','limbs'].forEach(d=>{const canvas=document.querySelector(`canvas[data-diagram="${d}"]`);if(canvas){const ctx=canvas.getContext('2d');const px=ctx.getImageData(0,0,canvas.width,canvas.height).data;if(px.some((v,i)=>i%4===3&&v>0))drawings[d]=canvas.toDataURL()}});
-const entry={id:currentEntryId||'ent_'+Date.now(),patientId:currentPatientId,date:document.getElementById('fieldSignDate').value||new Date().toISOString().split('T')[0],pmh:document.getElementById('fieldPMH').value,assessment:document.getElementById('fieldAssessment').value,heartSounds:document.getElementById('fieldHeartSounds').value,systems:document.getElementById('fieldSystems').value,plan:document.getElementById('fieldPlan').value,signName:document.getElementById('fieldSignName').value,signGrade:document.getElementById('fieldSignGrade').value,drawings};
-if(currentEntryId){const idx=data.entries.findIndex(e=>e.id===currentEntryId);if(idx>=0)data.entries[idx]=entry}else{data.entries.push(entry)}
-saveData(data);showScreen('patientRecord')}
+const entry={id:currentEntryId||'ent_'+Date.now(),patientId:currentPatientId,type:'wardRound',date:val('fieldSignDate')||new Date().toISOString().split('T')[0],time:val('fieldSignTime'),pmh:val('fieldPMH'),assessment:val('fieldAssessment'),heartSounds:val('fieldHeartSounds'),otherExam:val('fieldOtherExam'),systems:val('fieldSystems'),plan:val('fieldPlan'),signName:val('fieldSignName'),signGrade:val('fieldSignGrade'),drawings};
+upsert(data,entry)}
+function val(id){const el=document.getElementById(id);return el?el.value:''}
+function upsert(data,entry){if(currentEntryId){const idx=data.entries.findIndex(e=>e.id===currentEntryId);if(idx>=0)data.entries[idx]=entry}else data.entries.push(entry);saveData(data);showScreen('patientRecord')}
+
+/* ---------- NEWS form ---------- */
+function setScale(s){newsScaleSel=s;document.getElementById('scale1btn').classList.toggle('active',s===1);document.getElementById('scale2btn').classList.toggle('active',s===2);recalcNews()}
+function setO2(o){newsO2Sel=o;document.getElementById('airbtn').classList.toggle('active',!o);document.getElementById('o2btn').classList.toggle('active',o);recalcNews()}
+function readNewsForm(){return{rr:val('news_rr'),spo2:val('news_spo2'),scale:newsScaleSel,o2:newsO2Sel,o2device:val('news_o2device'),sbp:val('news_sbp'),dbp:val('news_dbp'),pulse:val('news_pulse'),consciousness:val('news_consciousness'),temp:val('news_temp')}}
+function pill(id,v){const el=document.getElementById(id);if(v===null||v===undefined){el.textContent='–';el.className='score-pill bg-gray-100 text-gray-400';return}const col=v===0?'bg-green-100 text-green-700':v===1?'bg-yellow-100 text-yellow-700':v===2?'bg-orange-100 text-orange-700':'bg-red-100 text-red-700';el.textContent=v;el.className='score-pill '+col}
+function recalcNews(){
+const n=readNewsForm(),sc=scoreNEWS(n);
+pill('sc_rr',sc.parts.rr);pill('sc_spo2',sc.parts.spo2);pill('sc_o2',sc.parts.o2);pill('sc_sbp',sc.parts.sbp);pill('sc_pulse',sc.parts.pulse);pill('sc_cons',sc.parts.cons);pill('sc_temp',sc.parts.temp);
+const any=Object.values(n).some(v=>v!==''&&v!==false&&v!=='A'&&v!==1);
+const r=newsRisk(sc.total,sc.parts);
+document.getElementById('newsTotal').textContent=sc.total;
+document.getElementById('newsTotal').style.color=any?r.color:'#cbd5e1';
+const badge=document.getElementById('newsRiskBadge');badge.textContent=r.label;badge.style.background=r.bg;badge.style.color=r.color;
+document.getElementById('newsRiskText').textContent=r.text;}
+function populateNewsForm(){
+const data=getData(),p=data.patients.find(p=>p.id===currentPatientId);
+document.getElementById('newsPatientName').textContent=p?`${p.name} · ${p.hospitalId} · ${p.ward||''}`:'';
+const ro=isViewMode;
+if(currentEntryId){const e=data.entries.find(x=>x.id===currentEntryId),n=e.news;
+setVal('news_rr',n.rr);setVal('news_spo2',n.spo2);setScale(n.scale||1);setO2(!!n.o2);setVal('news_o2device',n.o2device);setVal('news_sbp',n.sbp);setVal('news_dbp',n.dbp);setVal('news_pulse',n.pulse);setVal('news_consciousness',n.consciousness||'A');setVal('news_temp',n.temp);setVal('news_by',e.signName);setVal('news_role',e.signGrade);setVal('news_date',e.date);setVal('news_time',e.time);
+}else{['news_rr','news_spo2','news_o2device','news_sbp','news_dbp','news_pulse','news_temp','news_by'].forEach(id=>setVal(id,''));setVal('news_consciousness','A');setVal('news_role','');setScale(1);setO2(false);setVal('news_date',new Date().toISOString().split('T')[0]);setVal('news_time',new Date().toTimeString().slice(0,5));}
+document.querySelectorAll('#screen-newsForm input, #screen-newsForm select, #screen-newsForm button.seg-btn').forEach(el=>{if(ro)el.setAttribute('disabled','true');else el.removeAttribute('disabled')});
+document.getElementById('newsActions').style.display=ro?'none':'flex';
+recalcNews()}
+function saveNews(){
+const data=getData();
+const entry={id:currentEntryId||'ent_'+Date.now(),patientId:currentPatientId,type:'news',date:val('news_date')||new Date().toISOString().split('T')[0],time:val('news_time'),news:readNewsForm(),signName:val('news_by'),signGrade:val('news_role')};
+upsert(data,entry)}
+
+/* ---------- NOTE form ---------- */
+function populateNoteForm(){
+const data=getData(),p=data.patients.find(p=>p.id===currentPatientId);
+document.getElementById('notePatientName').textContent=p?`${p.name} · ${p.hospitalId} · ${p.ward||''}`:'';
+const ro=isViewMode;
+if(currentEntryId){const e=data.entries.find(x=>x.id===currentEntryId);setVal('note_category',e.noteCategory);setVal('note_text',e.noteText);setVal('note_by',e.signName);setVal('note_role',e.signGrade);setVal('note_date',e.date);setVal('note_time',e.time);}
+else{setVal('note_category','General note');setVal('note_text','');setVal('note_by','');setVal('note_role','');setVal('note_date',new Date().toISOString().split('T')[0]);setVal('note_time',new Date().toTimeString().slice(0,5));}
+document.querySelectorAll('#screen-noteForm input, #screen-noteForm select, #screen-noteForm textarea').forEach(el=>{if(ro)el.setAttribute('disabled','true');else el.removeAttribute('disabled')});
+document.getElementById('noteActions').style.display=ro?'none':'flex'}
+function saveNote(){
+const data=getData();
+const entry={id:currentEntryId||'ent_'+Date.now(),patientId:currentPatientId,type:'note',date:val('note_date')||new Date().toISOString().split('T')[0],time:val('note_time'),noteCategory:val('note_category'),noteText:val('note_text'),signName:val('note_by'),signGrade:val('note_role')};
+upsert(data,entry)}
+
+/* ---------- ADMIN ---------- */
+function adminLogin(){
+const u=val('loginUser').trim(),p=val('loginPass');
+const found=ADMIN_USERS.find(a=>a.user.toLowerCase()===u.toLowerCase()&&a.pass===p);
+if(!found){document.getElementById('loginError').classList.remove('hidden');return}
+adminAuthed=true;adminUser=found.name;renderAdmin()}
+function adminLogout(){adminAuthed=false;adminUser=null;showScreen('patientList')}
+function renderAdmin(){
+const login=document.getElementById('adminLoginView'),panel=document.getElementById('adminPanelView');
+if(!adminAuthed){login.classList.remove('hidden');panel.classList.add('hidden');setVal('loginUser','');setVal('loginPass','');document.getElementById('loginError').classList.add('hidden');setTimeout(()=>{const f=document.getElementById('loginUser');if(f)f.focus()},50);return}
+login.classList.add('hidden');panel.classList.remove('hidden');
+document.getElementById('adminWho').textContent='Logged in as '+adminUser;
+const data=getData();const tb=document.getElementById('adminTableBody');
+if(data.patients.length===0){tb.innerHTML='<tr><td colspan="5" class="px-5 py-8 text-center text-gray-400">No patients</td></tr>';return}
+tb.innerHTML=data.patients.map(p=>`<tr class="border-t border-gray-100"><td class="px-5 py-3"><span class="font-medium text-gray-800">${p.name}</span><span class="block text-xs text-gray-400">${p.consultant||''}</span></td><td class="px-5 py-3 text-gray-600">${p.hospitalId}</td><td class="px-5 py-3 text-gray-600">${p.ward||'-'}</td><td class="px-5 py-3">${p.discharged?'<span class="badge bg-gray-200 text-gray-600">Discharged</span>':'<span class="badge bg-green-100 text-green-700">Admitted</span>'}</td><td class="px-5 py-3 text-right whitespace-nowrap">${p.discharged?`<button onclick="readmitPatient('${p.id}')" class="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">Re-admit</button>`:`<button onclick="dischargePatient('${p.id}')" class="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">Discharge</button>`} <button onclick="adminDelete('${p.id}')" class="btn-danger px-3 py-1.5 rounded-lg text-xs font-medium ml-1">Delete</button></td></tr>`).join('')}
+function dischargePatient(id){if(!confirm('Discharge this patient? Their record is kept and they move to the Discharged list.'))return;const data=getData();const p=data.patients.find(x=>x.id===id);if(p){p.discharged=true;p.dischargedDate=new Date().toISOString().split('T')[0]}saveData(data);renderAdmin()}
+function readmitPatient(id){const data=getData();const p=data.patients.find(x=>x.id===id);if(p){p.discharged=false;p.dischargedDate=null;p.admittedDate=new Date().toISOString().split('T')[0]}saveData(data);renderAdmin()}
+function adminDelete(id){if(!confirm('Permanently delete this patient AND all their entries? This cannot be undone.'))return;const data=getData();data.patients=data.patients.filter(p=>p.id!==id);data.entries=data.entries.filter(e=>e.patientId!==id);saveData(data);renderAdmin()}
+
+/* ---------- drawing canvases ---------- */
 function initDrawingCanvases(){
 document.querySelectorAll('.drawing-canvas').forEach(canvas=>{
 const container=canvas.parentElement;canvas.width=container.offsetWidth;canvas.height=container.offsetHeight;
@@ -215,7 +573,7 @@ const toolbar=document.querySelector(`[data-toolbar="${diagram}"]`);
 if(toolbar){if(isViewMode){toolbar.innerHTML='';canvas.style.cursor='default';return}
 toolbar.innerHTML=`<button class="toolbar-btn active" onclick="setC('${diagram}','#e24b4a',this)"><div style="width:10px;height:10px;background:#e24b4a;border-radius:50%"></div></button><button class="toolbar-btn" onclick="setC('${diagram}','#1e40af',this)"><div style="width:10px;height:10px;background:#1e40af;border-radius:50%"></div></button><button class="toolbar-btn" onclick="setC('${diagram}','#16a34a',this)"><div style="width:10px;height:10px;background:#16a34a;border-radius:50%"></div></button><button class="toolbar-btn" onclick="setC('${diagram}','#1e293b',this)"><div style="width:10px;height:10px;background:#1e293b;border-radius:50%"></div></button><button class="toolbar-btn" onclick="clrD('${diagram}')" style="margin-left:auto"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>`}
 function pos(e){const r=canvas.getBoundingClientRect();const cx=e.touches?e.touches[0].clientX:e.clientX;const cy=e.touches?e.touches[0].clientY:e.clientY;return{x:cx-r.left,y:cy-r.top}}
-function start(e){e.preventDefault();drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y)}
+function start(e){if(isViewMode)return;e.preventDefault();drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y)}
 function draw(e){if(!drawing)return;e.preventDefault();const p=pos(e);const s=drawingState[diagram];ctx.strokeStyle=s.color;ctx.lineWidth=s.lineWidth;ctx.lineCap='round';ctx.lineJoin='round';ctx.lineTo(p.x,p.y);ctx.stroke()}
 function stop(){drawing=false}
 canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',draw);canvas.addEventListener('mouseup',stop);canvas.addEventListener('mouseleave',stop);
@@ -223,7 +581,118 @@ canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListe
 function setC(d,c,btn){drawingState[d].color=c;btn.closest('.flex').querySelectorAll('.toolbar-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
 function clrD(d){const s=drawingState[d];if(s)s.ctx.clearRect(0,0,s.canvas.width,s.canvas.height)}
 
-seedMockData();renderPatientList();
+/* ---------- RESULTS (bloods / biochem) ---------- */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function toggleFhir(key){const el=document.getElementById('fhir_'+key);if(el)el.classList.toggle('hidden')}
+function renderResultsTab(){
+const data=getData();const labs=data.labs.filter(l=>l.patientId===currentPatientId);
+const c=document.getElementById('tab-results');
+if(labs.length===0){c.innerHTML='<div class="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-400">No laboratory results linked for this patient.</div>';return}
+const panels={};labs.forEach(l=>{(panels[l.panel]=panels[l.panel]||[]).push(l)});
+let html='<p class="text-xs text-gray-400 mb-4">Cumulative laboratory report · most recent first · H/L = outside reference range. Mock data shaped as FHIR Observations.</p><div class="space-y-5">';
+Object.keys(panels).forEach(pn=>{
+const key=pn.replace(/[^a-z0-9]/gi,'');
+const cols=panels[pn].slice().sort((a,b)=>cmp(b)-cmp(a));
+const order=[],ref={};
+cols.forEach(col=>col.results.forEach(r=>{if(!order.includes(r.name)){order.push(r.name);ref[r.name]=r}}));
+html+=`<div class="bg-white rounded-2xl border border-gray-200 overflow-hidden"><div class="px-5 py-3 border-b border-gray-100 flex items-center justify-between"><h3 class="font-semibold text-gray-800 text-sm">${pn}</h3><button onclick="toggleFhir('lab_${key}')" class="text-xs text-blue-600 hover:text-blue-800 font-medium">{ } FHIR</button></div><div class="overflow-x-auto"><table class="w-full text-sm"><thead><tr class="text-xs text-gray-400"><th class="text-left px-5 py-2 font-medium">Analyte</th><th class="text-left px-3 py-2 font-medium">Range</th>`;
+cols.forEach(col=>{html+=`<th class="text-right px-3 py-2 font-medium whitespace-nowrap">${new Date(col.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short'})}<span class="block text-gray-300 font-normal">${col.time||''}</span></th>`});
+html+='</tr></thead><tbody>';
+order.forEach(an=>{const rr=ref[an];const rangeTxt=(rr.low!=null&&rr.high!=null)?`${rr.low}–${rr.high}`:(rr.high!=null?'<'+rr.high:'');
+html+=`<tr class="border-t border-gray-50"><td class="px-5 py-2 text-gray-700">${an}<span class="text-gray-300 text-xs"> ${rr.unit||''}</span></td><td class="px-3 py-2 text-gray-400 text-xs">${rangeTxt}</td>`;
+cols.forEach(col=>{const r=col.results.find(x=>x.name===an);if(!r){html+='<td class="px-3 py-2 text-right text-gray-300">–</td>';return}
+let flag='',cls='text-gray-800';
+if(r.high!=null&&parseFloat(r.value)>r.high){flag=' H';cls='lab-flag-h'}
+else if(r.low!=null&&parseFloat(r.value)<r.low){flag=' L';cls='lab-flag-l'}
+html+=`<td class="px-3 py-2 text-right ${cls}">${r.value}<span class="text-xs">${flag}</span></td>`});
+html+='</tr>'});
+html+=`</tbody></table></div><div class="px-5 pb-4"><pre id="fhir_lab_${key}" class="hidden fhir-pre">${esc(fhirLab(pn,cols[0]))}</pre></div></div>`});
+html+='</div>';c.innerHTML=html}
+function fhirLab(panel,col){
+const p=getData().patients.find(x=>x.id===currentPatientId)||{};
+const dt=col.date+'T'+(col.time||'00:00')+':00';
+const obs=col.results.map((r,i)=>({resourceType:'Observation',id:panel.replace(/[^a-z0-9]/gi,'')+'-'+i,status:'final',category:[{coding:[{system:'http://terminology.hl7.org/CodeSystem/observation-category',code:'laboratory'}]}],code:{text:r.name},subject:{reference:'Patient/'+currentPatientId,display:p.name},effectiveDateTime:dt,valueQuantity:{value:parseFloat(r.value),unit:r.unit||''},referenceRange:[{low:r.low!=null?{value:r.low}:undefined,high:r.high!=null?{value:r.high}:undefined}],interpretation:[{coding:[{code:(r.high!=null&&parseFloat(r.value)>r.high)?'H':(r.low!=null&&parseFloat(r.value)<r.low)?'L':'N'}]}]}));
+return JSON.stringify({resourceType:'DiagnosticReport',status:'final',category:[{coding:[{code:'LAB',display:'Laboratory'}]}],code:{text:panel},subject:{reference:'Patient/'+currentPatientId,display:p.name},effectiveDateTime:dt,issued:dt,result:obs.map(o=>({reference:'Observation/'+o.id})),contained:obs},null,2)}
+
+/* ---------- IMAGING (PACS mock) ---------- */
+function mockCXR(s){return `<svg viewBox='0 0 360 430' xmlns='http://www.w3.org/2000/svg' style='width:100%;height:auto;display:block'>
+<rect width='360' height='430' fill='#0a0a0a'/>
+<path d='M55 45 Q180 12 305 45 L322 405 L38 405 Z' fill='#242424'/>
+<ellipse cx='118' cy='200' rx='60' ry='125' fill='#111'/>
+<ellipse cx='242' cy='200' rx='60' ry='125' fill='#111'/>
+<path d='M180 115 Q150 160 160 260 Q180 300 208 258 Q218 165 180 115 Z' fill='#34343c' opacity='0.9'/>
+<rect x='175' y='62' width='10' height='320' fill='#3a3a3a' opacity='0.55'/>
+<path d='M70 85 Q120 74 172 95' stroke='#d0d0d0' stroke-width='4' fill='none' opacity='0.7'/>
+<path d='M290 85 Q240 74 188 95' stroke='#d0d0d0' stroke-width='4' fill='none' opacity='0.7'/>
+<g stroke='#9a9a9a' stroke-width='2' fill='none' opacity='0.45'>
+<path d='M62 130 Q118 118 168 138'/><path d='M60 165 Q118 152 168 172'/><path d='M60 200 Q118 188 168 206'/><path d='M62 235 Q118 224 168 240'/>
+<path d='M298 130 Q242 118 192 138'/><path d='M300 165 Q242 152 192 172'/><path d='M300 200 Q242 188 192 206'/><path d='M298 235 Q242 224 192 240'/>
+</g>
+<path d='M62 305 Q118 335 172 308' stroke='#bdbdbd' stroke-width='3' fill='none' opacity='0.6'/>
+<path d='M188 308 Q242 338 300 303' stroke='#bdbdbd' stroke-width='3' fill='none' opacity='0.6'/>
+<ellipse cx='110' cy='268' rx='42' ry='36' fill='#5e5e5e' opacity='0.55'/>
+<g id='cxrAnno'><ellipse cx='110' cy='268' rx='48' ry='42' fill='none' stroke='#fbbf24' stroke-width='2' stroke-dasharray='5 4'/><line x1='110' y1='312' x2='110' y2='352' stroke='#fbbf24' stroke-width='1.5'/><text x='110' y='368' fill='#fbbf24' font-size='12' text-anchor='middle' font-family='monospace'>RLZ consolidation</text></g>
+<text x='12' y='22' fill='#888' font-size='11' font-family='monospace'>R</text>
+<text x='348' y='22' fill='#888' font-size='11' font-family='monospace' text-anchor='end'>${s.modality||'CR'}</text>
+<text x='12' y='418' fill='#777' font-size='10' font-family='monospace'>THOMPSON, M · H7291034 · ${fmtDate(s.date)}</text>
+<text x='180' y='225' fill='#ffffff' opacity='0.06' font-size='38' font-weight='700' text-anchor='middle' transform='rotate(-20 180 225)'>SYNTHETIC</text>
+</svg>`}
+function selectImaging(id){selectedImaging=id;imgView={zoom:100,bright:100,contrast:100,anno:true};renderImagingTab()}
+function setImgView(k,v){imgView[k]=(k==='anno')?v:parseInt(v);applyImgView()}
+function resetImgView(){imgView={zoom:100,bright:100,contrast:100,anno:true};renderImagingTab()}
+function applyImgView(){const w=document.getElementById('cxrWrap');if(w){w.style.transform='scale('+(imgView.zoom/100)+')';w.parentElement.style.filter='brightness('+(imgView.bright/100)+') contrast('+(imgView.contrast/100)+')'}const a=document.getElementById('cxrAnno');if(a)a.style.display=imgView.anno?'':'none'}
+function renderImagingTab(){
+const data=getData();const studies=data.imaging.filter(i=>i.patientId===currentPatientId).sort((a,b)=>cmp(b)-cmp(a));
+const c=document.getElementById('tab-imaging');
+if(studies.length===0){c.innerHTML='<div class="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-400">No imaging linked for this patient.</div>';return}
+if(!selectedImaging||!studies.find(s=>s.id===selectedImaging))selectedImaging=studies[0].id;
+const sel=studies.find(s=>s.id===selectedImaging);
+const list=studies.map(s=>{const active=s.id===selectedImaging;
+const st=s.status==='final'?'<span class="badge bg-green-100 text-green-700">Final</span>':s.status==='requested'?'<span class="badge bg-gray-100 text-gray-500">Requested</span>':'<span class="badge bg-yellow-100 text-yellow-700">Preliminary</span>';
+return`<div onclick="selectImaging('${s.id}')" class="p-3 rounded-xl border cursor-pointer mb-2 ${active?'border-blue-400 bg-blue-50':'border-gray-200 bg-white hover:border-gray-300'}"><div class="flex items-center justify-between"><span class="text-xs font-semibold text-gray-600">${s.modality} · ${s.accession||''}</span>${st}</div><p class="text-sm text-gray-800 mt-1">${s.description}</p><p class="text-xs text-gray-400">${fmtDate(s.date)} ${s.time||''}</p></div>`}).join('');
+let viewer;
+if(sel.hasImage){viewer=`<div class="bg-black rounded-xl overflow-hidden relative" style="max-height:460px"><div id="cxrWrap" style="transform-origin:center;transition:transform .08s">${mockCXR(sel)}</div></div><div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-3 bg-white border border-gray-200 rounded-xl p-3 text-xs text-gray-600"><label class="flex items-center gap-2">Zoom<input type="range" min="50" max="300" value="${imgView.zoom}" oninput="setImgView('zoom',this.value)"></label><label class="flex items-center gap-2">Bright<input type="range" min="50" max="180" value="${imgView.bright}" oninput="setImgView('bright',this.value)"></label><label class="flex items-center gap-2">Contrast<input type="range" min="50" max="220" value="${imgView.contrast}" oninput="setImgView('contrast',this.value)"></label><label class="flex items-center gap-2"><input type="checkbox" ${imgView.anno?'checked':''} onchange="setImgView('anno',this.checked)">Annotation</label><button onclick="resetImgView()" class="btn-secondary px-2 py-1 rounded-lg">Reset</button></div><p class="text-xs text-gray-400 mt-2">Synthetic image for demo only — not a real radiograph. A production build would render DICOM via Cornerstone.js / OHIF over DICOMweb (WADO-RS).</p>`}
+else{viewer=`<div class="bg-gray-50 border border-dashed border-gray-300 rounded-xl h-56 flex items-center justify-center text-gray-400 text-sm">No images available — study ${sel.status}</div>`}
+const rep=`<div class="bg-white border border-gray-200 rounded-xl p-4 mt-3"><div class="flex items-center justify-between mb-2"><h4 class="font-semibold text-gray-800 text-sm">Radiology report</h4><button onclick="toggleFhir('img_${sel.id}')" class="text-xs text-blue-600 hover:text-blue-800 font-medium">{ } FHIR</button></div>${sel.conclusion?`<p class="text-sm text-gray-900 font-medium mb-2">${sel.conclusion}</p>`:''}<p class="text-sm text-gray-600 whitespace-pre-line">${sel.report||''}</p><p class="text-xs text-gray-400 mt-3">${sel.reportStatus==='final'?'Reported by '+(sel.reportedBy||'')+' · '+(sel.reportedAt||''):'Report pending'}</p><pre id="fhir_img_${sel.id}" class="hidden fhir-pre">${esc(fhirImaging(sel))}</pre></div>`;
+c.innerHTML=`<div class="grid grid-cols-1 lg:grid-cols-3 gap-5"><div class="lg:col-span-1">${list}</div><div class="lg:col-span-2">${viewer}${rep}</div></div>`;
+applyImgView()}
+function fhirImaging(s){
+const p=getData().patients.find(x=>x.id===currentPatientId)||{};
+const started=s.date+'T'+(s.time||'00:00')+':00';
+return JSON.stringify({resourceType:'ImagingStudy',id:s.id,status:s.hasImage?'available':'registered',subject:{reference:'Patient/'+currentPatientId,display:p.name},started:started,modality:[{system:'http://dicom.nema.org/resources/ontology/DCM',code:s.modality}],numberOfSeries:1,numberOfInstances:s.hasImage?1:0,description:s.description,identifier:[{system:'urn:dicom:accession',value:s.accession}],endpoint:[{reference:'Endpoint/pacs-dicomweb',display:'WADO-RS'}],_diagnosticReport:{resourceType:'DiagnosticReport',status:s.reportStatus==='final'?'final':'registered',category:[{coding:[{system:'http://terminology.hl7.org/CodeSystem/v2-0074',code:'RAD',display:'Radiology'}]}],code:{text:s.description},subject:{reference:'Patient/'+currentPatientId,display:p.name},conclusion:s.conclusion||null,issued:s.reportedAt||null}},null,2)}
+
+/* ---------- JOURNEY (ED Tracker link) ---------- */
+function renderJourneyTab(){
+const data=getData();
+const evs=data.entries.filter(e=>e.patientId===currentPatientId).sort((a,b)=>cmp(a)-cmp(b));
+const c=document.getElementById('tab-journey');
+const edEvs=evs.filter(e=>(e.location||'Ward')==='ED');
+const transfer=evs.find(e=>e.type==='transfer');
+let metrics;
+if(edEvs.length){const first=edEvs[0];const last=transfer||edEvs[edEvs.length-1];const mins=Math.max(0,Math.round((cmp(last)-cmp(first))/60000));const h=Math.floor(mins/60),m=mins%60;
+metrics=`<div class="grid grid-cols-3 gap-3 mb-5"><div class="bg-white border border-gray-200 rounded-xl p-4"><p class="text-xs text-gray-400">Arrived ED</p><p class="font-semibold text-gray-800">${first.time||'—'}</p><p class="text-xs text-gray-400">${fmtDate(first.date)}</p></div><div class="bg-white border border-gray-200 rounded-xl p-4"><p class="text-xs text-gray-400">Transferred</p><p class="font-semibold text-gray-800">${transfer?transfer.time:'—'}</p><p class="text-xs text-gray-400">${transfer?transfer.to:'still in ED'}</p></div><div class="bg-white border border-gray-200 rounded-xl p-4"><p class="text-xs text-gray-400">Time in ED</p><p class="font-semibold text-gray-800">${h}h ${m}m</p><p class="text-xs text-gray-400">${edEvs.length} ED events</p></div></div>`}
+else{metrics=`<div class="bg-white border border-gray-200 rounded-xl p-5 mb-5 text-sm text-gray-500">No ED episode linked for this patient. <button onclick="importFromED()" class="text-blue-600 hover:text-blue-800 font-medium">Import a sample patient from ED Tracker →</button></div>`}
+const tl=evs.map(e=>{const loc=e.location||'Ward';
+if(e.type==='transfer')return`<div class="my-3 flex items-center gap-3"><div class="flex-1 border-t-2 border-dashed border-amber-300"></div><span class="badge bg-amber-100 text-amber-700 whitespace-nowrap">⇄ ${e.from} → ${e.to} · ${e.time||''}</span><div class="flex-1 border-t-2 border-dashed border-amber-300"></div></div>`;
+const dot=loc==='ED'?'#d97706':'#1e40af';const meta=TYPE_META[e.type]||TYPE_META.note;
+let s='';if(e.type==='wardRound')s=e.assessment?e.assessment.substring(0,90)+'…':'Ward round';else if(e.type==='news'){const sc=scoreNEWS(e.news);s='Observations · NEWS '+sc.total}else s=(e.noteCategory?e.noteCategory+': ':'')+(e.noteText?e.noteText.substring(0,80):'');
+return`<div class="flex gap-3"><div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full mt-1.5" style="background:${dot}"></div><div class="flex-1 w-px bg-gray-200"></div></div><div class="flex-1 pb-4"><div class="flex items-center gap-2 flex-wrap"><span class="badge" style="background:${loc==='ED'?'#fef3c7':'#eff6ff'};color:${loc==='ED'?'#b45309':'#1e40af'}">${loc}</span><span class="badge ${meta.cls}">${meta.label}</span><span class="text-xs text-gray-500">${fmtDate(e.date)} ${e.time||''}</span>${e.source?`<span class="text-xs text-gray-300">via ${e.source}</span>`:''}</div><p class="text-sm text-gray-600 mt-1">${s}</p></div></div>`}).join('');
+c.innerHTML=metrics+`<div class="bg-white border border-gray-200 rounded-2xl p-5">${tl}</div><p class="text-xs text-gray-400 mt-3">One patient identity keyed on NHS number; ED and ward events share a single timeline. In production an ED→ward move is an HL7 ADT^A02 transfer; here it is a linked event imported from ED Tracker (mock).</p>`}
+function importFromED(){
+const data=getData();
+if(data.patients.find(p=>p.id==='pt_ed_import')){alert('The sample ED patient (Arjun Mehta) is already imported.');setPatientFilter('active');return}
+const pid='pt_ed_import',today=new Date().toISOString().split('T')[0];
+data.patients.push({id:pid,name:'Arjun Mehta',hospitalId:'H5540192',nhsNumber:'488 219 3041',dob:'1979-08-22',ward:'Ward 6 / Bed 9',consultant:'Dr Patel',admittedDate:today,discharged:false,dischargedDate:null});
+data.entries.push({id:'edx_1',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:today,time:'13:05',noteCategory:'General note',noteText:'ED triage: 46M, central chest pain radiating to left arm, onset 1h. Diaphoretic. Manchester triage category 2.',signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'});
+data.entries.push({id:'edx_2',patientId:pid,type:'news',location:'ED',source:'ED Tracker',date:today,time:'13:12',news:{rr:'22',spo2:'96',scale:1,o2:false,o2device:'',sbp:'148',dbp:'92',pulse:'104',consciousness:'A',temp:'37.0'},signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'});
+data.entries.push({id:'edx_3',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:today,time:'13:20',noteCategory:'Bloods taken',noteText:'Bloods + troponin sent. 12-lead ECG performed (awaiting senior review). Aspirin 300mg given.',signName:'ED SHO',signGrade:'SHO'});
+data.entries.push({id:'edx_4',patientId:pid,type:'transfer',location:'ED',from:'ED Majors',to:'Ward 6 / Bed 9',date:today,time:'15:40',signName:'ED Coordinator',signGrade:'Charge Nurse / Sister'});
+saveData(data);
+alert('Imported Arjun Mehta from ED Tracker (NHS 488 219 3041) — full ED journey attached. Open the patient and check the Journey tab.');
+setPatientFilter('active')}
+
+/* ---------- init ---------- */
+fillRoles();seedMockData();renderPatientList();
 </script>
 </body>
 </html>
