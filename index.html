@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Patient Data Centre</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 body{font-family:'DM Sans',sans-serif;background:#f0f2f5}.screen{display:none}.screen.active{display:block}.drawing-canvas{position:absolute;top:0;left:0;cursor:crosshair}.diagram-container{position:relative;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden}.entry-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}.btn-primary{background:#1e40af;color:#fff;transition:all .2s}.btn-primary:hover{background:#1e3a8a}.btn-secondary{background:#e2e8f0;color:#334155;transition:all .2s}.btn-secondary:hover{background:#cbd5e1}.btn-danger{background:#fee2e2;color:#991b1b;transition:all .2s}.btn-danger:hover{background:#fecaca}.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:500}.fade-in{animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}textarea{resize:vertical}.toolbar-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:1px solid #e2e8f0;cursor:pointer;transition:all .15s}.toolbar-btn:hover{background:#e2e8f0}.toolbar-btn.active{background:#1e40af;color:#fff;border-color:#1e40af}.ai-badge{background:linear-gradient(135deg,#ede9fe,#dbeafe);color:#4338ca;font-size:11px;padding:2px 8px;border-radius:6px;font-weight:600;letter-spacing:.3px}
@@ -238,9 +240,38 @@ body{font-family:'DM Sans',sans-serif;background:#f0f2f5}.screen{display:none}.s
 </div></div></div>
 
 <script>
-/* ---------- data store ---------- */
-function getData(){const d=JSON.parse(localStorage.getItem('wardRoundData')||'{}');d.patients=d.patients||[];d.entries=d.entries||[];d.imaging=d.imaging||[];d.labs=d.labs||[];return d}
-function saveData(d){localStorage.setItem('wardRoundData',JSON.stringify(d))}
+/* ---------- data store (Supabase-backed) ---------- */
+const SUPABASE_URL='https://zmbhzevdqcybqebtfhgf.supabase.co';
+const SUPABASE_KEY='sb_publishable_8_crUzoMYpkxiFk-gF0ArQ_QyQe7v-l';
+let db=null;
+let STATE={patients:[],entries:[],labs:[],imaging:[]};
+function getData(){return STATE}
+function saveData(){/* writes now go directly to Supabase via the helpers below */}
+
+/* --- shape mappers: app object <-> database row --- */
+function patientToDb(p){return{id:p.id,nhs_number:p.nhsNumber||null,hospital_id:p.hospitalId||null,name:p.name||null,dob:p.dob||null,ward:p.ward||null,consultant:p.consultant||null,location:p.location||null,admitted_date:p.admittedDate||null,discharged:!!p.discharged,discharged_date:p.dischargedDate||null}}
+function patientFromDb(r){return{id:r.id,nhsNumber:r.nhs_number,hospitalId:r.hospital_id,name:r.name,dob:r.dob,ward:r.ward,consultant:r.consultant,location:r.location,admittedDate:r.admitted_date,discharged:r.discharged,dischargedDate:r.discharged_date}}
+function entryToDb(e){const{id,patientId,type,location,source,date,time,...rest}=e;return{id,patient_id:patientId,type,location:location||null,source:source||null,date:date||null,time:time||null,payload:rest}}
+function entryFromDb(r){return Object.assign({id:r.id,patientId:r.patient_id,type:r.type,location:r.location,source:r.source,date:r.date,time:r.time},r.payload||{})}
+function labToDb(l){return{id:l.id,patient_id:l.patientId,panel:l.panel||null,date:l.date||null,time:l.time||null,source:l.source||null,results:l.results||[]}}
+function labFromDb(r){return{id:r.id,patientId:r.patient_id,panel:r.panel,date:r.date,time:r.time,source:r.source,results:r.results}}
+function imagingToDb(i){const{id,patientId,...rest}=i;return{id,patient_id:patientId,payload:rest}}
+function imagingFromDb(r){return Object.assign({id:r.id,patientId:r.patient_id},r.payload||{})}
+
+/* --- load everything into memory once --- */
+async function loadAll(){
+const [pp,ee,ll,ii]=await Promise.all([db.from('patients').select('*'),db.from('entries').select('*'),db.from('labs').select('*'),db.from('imaging').select('*')]);
+const err=pp.error||ee.error||ll.error||ii.error;if(err)throw err;
+STATE.patients=(pp.data||[]).map(patientFromDb);
+STATE.entries=(ee.data||[]).map(entryFromDb);
+STATE.labs=(ll.data||[]).map(labFromDb);
+STATE.imaging=(ii.data||[]).map(imagingFromDb);
+}
+/* --- write helpers (update DB + in-memory cache together) --- */
+async function dbSavePatient(p){const i=STATE.patients.findIndex(x=>x.id===p.id);if(i>=0)STATE.patients[i]=p;else STATE.patients.push(p);const{error}=await db.from('patients').upsert(patientToDb(p));if(error)throw error}
+async function dbSaveEntry(e){const i=STATE.entries.findIndex(x=>x.id===e.id);if(i>=0)STATE.entries[i]=e;else STATE.entries.push(e);const{error}=await db.from('entries').upsert(entryToDb(e));if(error)throw error}
+async function dbDeletePatient(id){STATE.patients=STATE.patients.filter(p=>p.id!==id);STATE.entries=STATE.entries.filter(e=>e.patientId!==id);STATE.labs=STATE.labs.filter(l=>l.patientId!==id);STATE.imaging=STATE.imaging.filter(im=>im.patientId!==id);const{error}=await db.from('patients').delete().eq('id',id);if(error)throw error}
+async function dbWipeAll(){const{error}=await db.from('patients').delete().not('id','is',null);if(error)throw error;STATE={patients:[],entries:[],labs:[],imaging:[]}}
 let currentPatientId=null,currentEntryId=null,currentEntryType=null,isViewMode=false,drawingState={};
 let currentTab='timeline',selectedImaging=null,imgView={zoom:100,bright:100,contrast:100,anno:true};
 let patientFilter='active',newsScaleSel=1,newsO2Sel=false;
@@ -291,9 +322,8 @@ function newsRisk(total,parts){
 }
 
 /* ---------- seed / demo ---------- */
-function seedMockData(){
+async function seedMockData(){
 const data=getData();
-if(data.patients.find(p=>p.id==='pt_mock_001'))return;
 const pid='pt_mock_001';
 const adm=new Date();adm.setDate(adm.getDate()-3);
 data.patients.push({id:pid,name:'Margaret Thompson',hospitalId:'H7291034',nhsNumber:'432 891 7654',dob:'1951-03-14',ward:'Ward 6 / Bed 4',consultant:'Dr Patel',admittedDate:adm.toISOString().split('T')[0],discharged:false,dischargedDate:null});
@@ -355,9 +385,13 @@ data.imaging.push(
 {id:'img1',patientId:pid,accession:'ACC-CR-88213',modality:'CR',description:'Chest X-ray (PA, erect)',date:dStr(3),time:'05:40',source:'ED PACS',status:'final',hasImage:true,reportStatus:'final',reportedBy:'Dr R. Iyer (Consultant Radiologist)',reportedAt:dStr(3)+' 11:20',conclusion:'Right lower lobe consolidation consistent with pneumonia. No effusion or pneumothorax.',report:'Clinical details: Cough, fever, breathlessness. ?LRTI.\n\nFindings: Patchy airspace opacification in the right lower zone consistent with consolidation. The left lung is clear. Cardiomediastinal contour within normal limits. No pleural effusion. No pneumothorax. Bony thorax unremarkable.\n\nConclusion: Right lower lobe pneumonia. Recommend follow-up radiograph in 6 weeks to confirm resolution.'},
 {id:'img2',patientId:pid,accession:'ACC-CR-90551',modality:'CR',description:'Chest X-ray (follow-up)',date:fu.toISOString().split('T')[0],time:'',source:'PACS',status:'requested',hasImage:false,reportStatus:'pending',conclusion:'',report:'Requested at discharge — to be performed at 6-week respiratory follow-up to confirm radiographic resolution.'}
 );
-saveData(data);
+await db.from('patients').insert(STATE.patients.map(patientToDb));
+await db.from('entries').insert(STATE.entries.map(entryToDb));
+await db.from('labs').insert(STATE.labs.map(labToDb));
+await db.from('imaging').insert(STATE.imaging.map(imagingToDb));
 }
-function resetDemo(){if(!confirm('Reset all data back to the original demo? Any patients or entries you have added will be permanently deleted.'))return;localStorage.removeItem('wardRoundData');seedMockData();patientFilter='active';showScreen('patientList')}
+async function resetDemo(){if(!confirm('Reset all data back to the original demo? Any patients or entries added will be permanently deleted from the shared database.'))return;
+try{await dbWipeAll();await seedMockData();patientFilter='active';showScreen('patientList')}catch(err){alert('Reset failed: '+(err.message||err))}}
 
 /* ---------- AI summary ---------- */
 function generateAISummary(entries){
@@ -419,7 +453,7 @@ return`<div class="bg-white rounded-2xl p-5 border border-gray-200 cursor-pointe
 /* ---------- add patient modal ---------- */
 function openAddPatientModal(){document.getElementById('addPatientModal').classList.remove('hidden')}
 function closeAddPatientModal(){document.getElementById('addPatientModal').classList.add('hidden');['modalName','modalID','modalNHS','modalDOB','modalWard','modalConsultant'].forEach(id=>document.getElementById(id).value='')}
-function addPatient(){const n=document.getElementById('modalName').value.trim();if(!n)return alert('Please enter a patient name.');const data=getData();data.patients.push({id:'pt_'+Date.now(),name:n,hospitalId:document.getElementById('modalID').value.trim()||'N/A',nhsNumber:document.getElementById('modalNHS').value.trim(),dob:document.getElementById('modalDOB').value,ward:document.getElementById('modalWard').value.trim(),consultant:document.getElementById('modalConsultant').value.trim(),admittedDate:new Date().toISOString().split('T')[0],discharged:false,dischargedDate:null});saveData(data);closeAddPatientModal();patientFilter='active';if(document.getElementById('screen-admin').classList.contains('active'))renderAdmin();else renderPatientList()}
+async function addPatient(){const n=document.getElementById('modalName').value.trim();if(!n)return alert('Please enter a patient name.');const p={id:'pt_'+Date.now(),name:n,hospitalId:document.getElementById('modalID').value.trim()||'N/A',nhsNumber:document.getElementById('modalNHS').value.trim(),dob:document.getElementById('modalDOB').value,ward:document.getElementById('modalWard').value.trim(),consultant:document.getElementById('modalConsultant').value.trim(),location:null,admittedDate:new Date().toISOString().split('T')[0],discharged:false,dischargedDate:null};try{await dbSavePatient(p)}catch(err){return alert('Could not save patient: '+(err.message||err))}closeAddPatientModal();patientFilter='active';if(document.getElementById('screen-admin').classList.contains('active'))renderAdmin();else renderPatientList()}
 
 /* ---------- patient record ---------- */
 function openPatient(id){currentPatientId=id;showScreen('patientRecord')}
@@ -497,9 +531,9 @@ function saveWardRound(){
 const data=getData(),drawings={};
 ['lungs','abdomen','limbs'].forEach(d=>{const canvas=document.querySelector(`canvas[data-diagram="${d}"]`);if(canvas){const ctx=canvas.getContext('2d');const px=ctx.getImageData(0,0,canvas.width,canvas.height).data;if(px.some((v,i)=>i%4===3&&v>0))drawings[d]=canvas.toDataURL()}});
 const entry={id:currentEntryId||'ent_'+Date.now(),patientId:currentPatientId,type:'wardRound',date:val('fieldSignDate')||new Date().toISOString().split('T')[0],time:val('fieldSignTime'),pmh:val('fieldPMH'),assessment:val('fieldAssessment'),heartSounds:val('fieldHeartSounds'),otherExam:val('fieldOtherExam'),systems:val('fieldSystems'),plan:val('fieldPlan'),signName:val('fieldSignName'),signGrade:val('fieldSignGrade'),drawings};
-upsert(data,entry)}
+upsert(entry)}
 function val(id){const el=document.getElementById(id);return el?el.value:''}
-function upsert(data,entry){if(currentEntryId){const idx=data.entries.findIndex(e=>e.id===currentEntryId);if(idx>=0)data.entries[idx]=entry}else data.entries.push(entry);saveData(data);showScreen('patientRecord')}
+async function upsert(entry){try{await dbSaveEntry(entry)}catch(err){return alert('Could not save entry: '+(err.message||err))}showScreen('patientRecord')}
 
 /* ---------- NEWS form ---------- */
 function setScale(s){newsScaleSel=s;document.getElementById('scale1btn').classList.toggle('active',s===1);document.getElementById('scale2btn').classList.toggle('active',s===2);recalcNews()}
@@ -528,7 +562,7 @@ recalcNews()}
 function saveNews(){
 const data=getData();
 const entry={id:currentEntryId||'ent_'+Date.now(),patientId:currentPatientId,type:'news',date:val('news_date')||new Date().toISOString().split('T')[0],time:val('news_time'),news:readNewsForm(),signName:val('news_by'),signGrade:val('news_role')};
-upsert(data,entry)}
+upsert(entry)}
 
 /* ---------- NOTE form ---------- */
 function populateNoteForm(){
@@ -542,7 +576,7 @@ document.getElementById('noteActions').style.display=ro?'none':'flex'}
 function saveNote(){
 const data=getData();
 const entry={id:currentEntryId||'ent_'+Date.now(),patientId:currentPatientId,type:'note',date:val('note_date')||new Date().toISOString().split('T')[0],time:val('note_time'),noteCategory:val('note_category'),noteText:val('note_text'),signName:val('note_by'),signGrade:val('note_role')};
-upsert(data,entry)}
+upsert(entry)}
 
 /* ---------- ADMIN ---------- */
 function adminLogin(){
@@ -559,9 +593,9 @@ document.getElementById('adminWho').textContent='Logged in as '+adminUser;
 const data=getData();const tb=document.getElementById('adminTableBody');
 if(data.patients.length===0){tb.innerHTML='<tr><td colspan="5" class="px-5 py-8 text-center text-gray-400">No patients</td></tr>';return}
 tb.innerHTML=data.patients.map(p=>`<tr class="border-t border-gray-100"><td class="px-5 py-3"><span class="font-medium text-gray-800">${p.name}</span><span class="block text-xs text-gray-400">${p.consultant||''}</span></td><td class="px-5 py-3 text-gray-600">${p.hospitalId}</td><td class="px-5 py-3 text-gray-600">${p.ward||'-'}</td><td class="px-5 py-3">${p.discharged?'<span class="badge bg-gray-200 text-gray-600">Discharged</span>':'<span class="badge bg-green-100 text-green-700">Admitted</span>'}</td><td class="px-5 py-3 text-right whitespace-nowrap">${p.discharged?`<button onclick="readmitPatient('${p.id}')" class="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">Re-admit</button>`:`<button onclick="dischargePatient('${p.id}')" class="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium">Discharge</button>`} <button onclick="adminDelete('${p.id}')" class="btn-danger px-3 py-1.5 rounded-lg text-xs font-medium ml-1">Delete</button></td></tr>`).join('')}
-function dischargePatient(id){if(!confirm('Discharge this patient? Their record is kept and they move to the Discharged list.'))return;const data=getData();const p=data.patients.find(x=>x.id===id);if(p){p.discharged=true;p.dischargedDate=new Date().toISOString().split('T')[0]}saveData(data);renderAdmin()}
-function readmitPatient(id){const data=getData();const p=data.patients.find(x=>x.id===id);if(p){p.discharged=false;p.dischargedDate=null;p.admittedDate=new Date().toISOString().split('T')[0]}saveData(data);renderAdmin()}
-function adminDelete(id){if(!confirm('Permanently delete this patient AND all their entries? This cannot be undone.'))return;const data=getData();data.patients=data.patients.filter(p=>p.id!==id);data.entries=data.entries.filter(e=>e.patientId!==id);saveData(data);renderAdmin()}
+async function dischargePatient(id){if(!confirm('Discharge this patient? Their record is kept and they move to the Discharged list.'))return;const p=STATE.patients.find(x=>x.id===id);if(p){p.discharged=true;p.dischargedDate=new Date().toISOString().split('T')[0];try{await dbSavePatient(p)}catch(err){return alert('Could not update: '+(err.message||err))}}renderAdmin()}
+async function readmitPatient(id){const p=STATE.patients.find(x=>x.id===id);if(p){p.discharged=false;p.dischargedDate=null;p.admittedDate=new Date().toISOString().split('T')[0];try{await dbSavePatient(p)}catch(err){return alert('Could not update: '+(err.message||err))}}renderAdmin()}
+async function adminDelete(id){if(!confirm('Permanently delete this patient AND all their entries? This cannot be undone.'))return;try{await dbDeletePatient(id)}catch(err){return alert('Could not delete: '+(err.message||err))}renderAdmin()}
 
 /* ---------- drawing canvases ---------- */
 function initDrawingCanvases(){
@@ -678,21 +712,35 @@ const dot=loc==='ED'?'#d97706':'#1e40af';const meta=TYPE_META[e.type]||TYPE_META
 let s='';if(e.type==='wardRound')s=e.assessment?e.assessment.substring(0,90)+'…':'Ward round';else if(e.type==='news'){const sc=scoreNEWS(e.news);s='Observations · NEWS '+sc.total}else s=(e.noteCategory?e.noteCategory+': ':'')+(e.noteText?e.noteText.substring(0,80):'');
 return`<div class="flex gap-3"><div class="flex flex-col items-center"><div class="w-3 h-3 rounded-full mt-1.5" style="background:${dot}"></div><div class="flex-1 w-px bg-gray-200"></div></div><div class="flex-1 pb-4"><div class="flex items-center gap-2 flex-wrap"><span class="badge" style="background:${loc==='ED'?'#fef3c7':'#eff6ff'};color:${loc==='ED'?'#b45309':'#1e40af'}">${loc}</span><span class="badge ${meta.cls}">${meta.label}</span><span class="text-xs text-gray-500">${fmtDate(e.date)} ${e.time||''}</span>${e.source?`<span class="text-xs text-gray-300">via ${e.source}</span>`:''}</div><p class="text-sm text-gray-600 mt-1">${s}</p></div></div>`}).join('');
 c.innerHTML=metrics+`<div class="bg-white border border-gray-200 rounded-2xl p-5">${tl}</div><p class="text-xs text-gray-400 mt-3">One patient identity keyed on NHS number; ED and ward events share a single timeline. In production an ED→ward move is an HL7 ADT^A02 transfer; here it is a linked event imported from ED Tracker (mock).</p>`}
-function importFromED(){
-const data=getData();
-if(data.patients.find(p=>p.id==='pt_ed_import')){alert('The sample ED patient (Arjun Mehta) is already imported.');setPatientFilter('active');return}
+async function importFromED(){
+if(STATE.patients.find(p=>p.id==='pt_ed_import')){alert('The sample ED patient (Arjun Mehta) is already imported.');setPatientFilter('active');return}
 const pid='pt_ed_import',today=new Date().toISOString().split('T')[0];
-data.patients.push({id:pid,name:'Arjun Mehta',hospitalId:'H5540192',nhsNumber:'488 219 3041',dob:'1979-08-22',ward:'Ward 6 / Bed 9',consultant:'Dr Patel',admittedDate:today,discharged:false,dischargedDate:null});
-data.entries.push({id:'edx_1',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:today,time:'13:05',noteCategory:'General note',noteText:'ED triage: 46M, central chest pain radiating to left arm, onset 1h. Diaphoretic. Manchester triage category 2.',signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'});
-data.entries.push({id:'edx_2',patientId:pid,type:'news',location:'ED',source:'ED Tracker',date:today,time:'13:12',news:{rr:'22',spo2:'96',scale:1,o2:false,o2device:'',sbp:'148',dbp:'92',pulse:'104',consciousness:'A',temp:'37.0'},signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'});
-data.entries.push({id:'edx_3',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:today,time:'13:20',noteCategory:'Bloods taken',noteText:'Bloods + troponin sent. 12-lead ECG performed (awaiting senior review). Aspirin 300mg given.',signName:'ED SHO',signGrade:'SHO'});
-data.entries.push({id:'edx_4',patientId:pid,type:'transfer',location:'ED',from:'ED Majors',to:'Ward 6 / Bed 9',date:today,time:'15:40',signName:'ED Coordinator',signGrade:'Charge Nurse / Sister'});
-saveData(data);
+const p={id:pid,name:'Arjun Mehta',hospitalId:'H5540192',nhsNumber:'488 219 3041',dob:'1979-08-22',ward:'Ward 6 / Bed 9',consultant:'Dr Patel',location:null,admittedDate:today,discharged:false,dischargedDate:null};
+const evs=[
+{id:'edx_1',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:today,time:'13:05',noteCategory:'General note',noteText:'ED triage: 46M, central chest pain radiating to left arm, onset 1h. Diaphoretic. Manchester triage category 2.',signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'},
+{id:'edx_2',patientId:pid,type:'news',location:'ED',source:'ED Tracker',date:today,time:'13:12',news:{rr:'22',spo2:'96',scale:1,o2:false,o2device:'',sbp:'148',dbp:'92',pulse:'104',consciousness:'A',temp:'37.0'},signName:'ED Triage Nurse',signGrade:'Staff Nurse (RN)'},
+{id:'edx_3',patientId:pid,type:'note',location:'ED',source:'ED Tracker',date:today,time:'13:20',noteCategory:'Bloods taken',noteText:'Bloods + troponin sent. 12-lead ECG performed (awaiting senior review). Aspirin 300mg given.',signName:'ED SHO',signGrade:'SHO'},
+{id:'edx_4',patientId:pid,type:'transfer',location:'ED',source:'ED Tracker',from:'ED Majors',to:'Ward 6 / Bed 9',date:today,time:'15:40',signName:'ED Coordinator',signGrade:'Charge Nurse / Sister'}
+];
+try{await dbSavePatient(p);for(const e of evs){await dbSaveEntry(e)}}catch(err){return alert('Import failed: '+(err.message||err))}
 alert('Imported Arjun Mehta from ED Tracker (NHS 488 219 3041) — full ED journey attached. Open the patient and check the Journey tab.');
 setPatientFilter('active')}
 
 /* ---------- init ---------- */
-fillRoles();seedMockData();renderPatientList();
+(async function init(){
+fillRoles();
+const grid=document.getElementById('patientGrid');if(grid)grid.innerHTML='<p class="text-gray-400 text-sm">Loading from database…</p>';
+try{
+if(!window.supabase)throw new Error('Supabase library failed to load (check your internet connection).');
+db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+await loadAll();
+if(STATE.patients.length===0)await seedMockData();
+renderPatientList();
+}catch(err){
+const m=document.querySelector('main');
+if(m)m.innerHTML='<div class="bg-white rounded-2xl border border-red-200 p-6 text-sm text-red-700 max-w-xl mx-auto mt-10"><p class="font-semibold mb-2">Could not connect to the database.</p><p>'+(err.message||err)+'</p><p class="mt-3 text-red-600">Check the Supabase URL and key near the top of the file, that the tables exist, and that the project is active — free Supabase projects pause after a week of inactivity and need resuming from the dashboard.</p></div>';
+}
+})();
 </script>
 </body>
 </html>
