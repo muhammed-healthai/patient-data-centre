@@ -14,15 +14,9 @@ One self-contained `.html` file — no build step, no framework, no install. Ope
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    ED["ED Tracker — React · Vercel"]
-    PDC["Patient Data Centre — single-file HTML"]
-    SB["Supabase project<br/>Postgres · Auth · Realtime<br/><br/>Authenticated session · RLS enforced"]
-    ED --> SB
-    PDC --> SB
-    SB --> PDC
-```
+## Architecture
+
+![Architecture: ED Tracker and the Patient Data Centre share one Supabase backend; every request crosses an authenticated, RLS-enforced boundary](docs/architecture.png)
 
 ## Features
 
