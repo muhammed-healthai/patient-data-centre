@@ -1,5 +1,7 @@
 # Patient Data Centre
 
+![ED Tracker publishing a patient live into the Patient Data Centre](docs/demo.gif)
+
 A single-file **ward clinical record** backed by Supabase, receiving live ED → ward transfers from [ED Tracker](https://github.com/M-Omarjee). The ward-side counterpart to the ED board: where a patient's record lives once they're admitted.
 
 > ⚠️ **Synthetic data only.** This is a portfolio/demo project, not a medical device, and is not for real patient data.
