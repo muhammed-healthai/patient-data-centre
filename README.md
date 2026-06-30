@@ -16,14 +16,12 @@ One self-contained `.html` file — no build step, no framework, no install. Ope
 
 ```mermaid
 flowchart TD
-    ED["ED Tracker<br/><i>React · Vercel</i>"]
-    PDC["Patient Data Centre<br/><i>Single-file HTML</i>"]
-    subgraph BOUNDARY [" Authenticated session · RLS enforced "]
-        SB["Supabase project<br/><br/>Postgres — patients · entries · labs · imaging<br/>Auth · Realtime"]
-    end
-    ED -->|publish on transfer| SB
-    PDC -->|read / write| SB
-    SB -->|realtime live updates| PDC
+    ED["ED Tracker — React · Vercel"]
+    PDC["Patient Data Centre — single-file HTML"]
+    SB["Supabase project<br/>Postgres · Auth · Realtime<br/><br/>Authenticated session · RLS enforced"]
+    ED --> SB
+    PDC --> SB
+    SB --> PDC
 ```
 
 ## Features
